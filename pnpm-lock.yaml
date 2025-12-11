@@ -15,16 +15,16 @@ importers:
         specifier: ^0.41.0
         version: 0.41.0(gel@2.2.0)(postgres@3.4.7)
       next:
-        specifier: ^15.2.3
+        specifier: ^15.2.6
         version: 15.5.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       postgres:
         specifier: ^3.4.4
         version: 3.4.7
       react:
-        specifier: ^19.0.0
+        specifier: ^19.0.1
         version: 19.2.0
       react-dom:
-        specifier: ^19.0.0
+        specifier: ^19.0.1
         version: 19.2.0(react@19.2.0)
       zod:
         specifier: ^3.24.2
@@ -61,11 +61,11 @@ importers:
         specifier: ^8.5.3
         version: 8.5.6
       prettier:
-        specifier: ^3.5.3
-        version: 3.6.2
+        specifier: ^3.7.4
+        version: 3.7.4
       prettier-plugin-tailwindcss:
         specifier: ^0.6.11
-        version: 0.6.14(prettier@3.6.2)
+        version: 0.6.14(prettier@3.7.4)
       tailwindcss:
         specifier: ^4.0.15
         version: 4.1.17
@@ -1865,6 +1865,7 @@ packages:
   next@15.5.6:
     resolution: {integrity: sha512-zTxsnI3LQo3c9HSdSf91O1jMNsEzIXDShXd4wVdg9y5shwLqBXi4ZtUUJyB86KGVSJLZx0PFONvO54aheGX8QQ==}
     engines: {node: ^18.18.0 || ^19.8.0 || >= 20.0.0}
+    deprecated: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/CVE-2025-66478 for more details.
     hasBin: true
     peerDependencies:
       '@opentelemetry/api': ^1.1.0
@@ -2038,8 +2039,8 @@ packages:
       prettier-plugin-svelte:
         optional: true
 
-  prettier@3.6.2:
-    resolution: {integrity: sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==}
+  prettier@3.7.4:
+    resolution: {integrity: sha512-v6UNi1+3hSlVvv8fSaoUbggEM5VErKmmpGA7Pl3HF8V6uKY7rvClBOJlH6yNwQtfTueNkGVpOv/mtWL9L4bgRA==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -4147,11 +4148,11 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier-plugin-tailwindcss@0.6.14(prettier@3.6.2):
+  prettier-plugin-tailwindcss@0.6.14(prettier@3.7.4):
     dependencies:
-      prettier: 3.6.2
+      prettier: 3.7.4
 
-  prettier@3.6.2: {}
+  prettier@3.7.4: {}
 
   prop-types@15.8.1:
     dependencies:
