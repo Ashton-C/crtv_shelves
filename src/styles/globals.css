@@ -1,6 +1,25 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
+  --font-sans:
+    var(--font-monstserrat-sans), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --color-1: #fa0ffa;
+  --color-2: #fafa0f;
+  --color-3: #0ffafa;
+  --color-4: #fa850f;
+  --color-5: #0ffa85;
+}
+
+.title-icon {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 1440px;
+  height: 64px;
+  background: #000000ff;
+  border-radius: 0px 0px 0px 0px;
+  box-shadow:
+    0px 0px 1px #171a1f12,
+    0px 0px 2px #171a1f1f;
 }

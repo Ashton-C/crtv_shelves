@@ -2,9 +2,31 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-      <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-        <div>Hello, CRTV_SHELVES under construction.</div>
+    <main className="from-5 sticky flex h-full w-full flex-col items-center justify-center rounded-xl bg-gradient-to-b to-gray-950 text-white">
+      <div className="container flex flex-col flex-wrap items-center justify-center gap-12 px-4 py-16 text-xl text-black">
+        <h1 className="hero-text text-3xl text-white">
+          Hi there! Welcome to CRTV_SHELVES!
+        </h1>
+        <p className="disc-p text-4 align-center w-3/4 justify-center font-mono">
+          Your journey to curate and share your favorite media starts here.
+          Let's get you set up!
+        </p>
+      </div>
+      <div className="first-visit-buttons flex w-1/2 flex-row justify-between">
+        <a
+          className="border-all bg-4/80 rounded-xl p-4 font-semibold text-white shadow-xl/30"
+          href="#"
+          id="create_first->add_shelf"
+        >
+          Create My First Shelf
+        </a>
+        <a
+          className="border-all bg-5/80 rounded-xl p-4 font-semibold text-white shadow-xl/30"
+          href="#"
+          id="connect_first->add_friend"
+        >
+          Connect with Friends!
+        </a>
       </div>
     </main>
   );
