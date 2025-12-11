@@ -9,7 +9,7 @@ export default function HomePage() {
         </h1>
         <p className="disc-p text-4 align-center w-3/4 justify-center font-mono">
           Your journey to curate and share your favorite media starts here.
-          Let's get you set up!
+          Let&apos;s get you set up!
         </p>
       </div>
       <div className="first-visit-buttons flex w-1/2 flex-row justify-between">
