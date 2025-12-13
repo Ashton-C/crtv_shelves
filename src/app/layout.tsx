@@ -1,7 +1,7 @@
 import "~/styles/globals.css";
 
 import { type Metadata } from "next";
-import { Montserrat } from "next/font/google";
+import { Montserrat, Rubik_Broken_Fax } from "next/font/google";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -16,55 +16,27 @@ const montserrat = Montserrat({
   variable: "--font-montserrat-sans",
 });
 
-function TopNav() {
-  return (
-    <nav className="font-family-montserrat-sans sticky top-0 flex w-full flex-row justify-between border-b-1 bg-gray-950 p-4 text-xl font-semibold rounded-xl">
-      <div className="title-div flex w-56 flex-row justify-between">
-        <div className="titleicon text-amber-300">
-          <Link className="title-icon-text" href="#">
-            ICON
-          </Link>
-        </div>
-        <div className="title-link text-amber-300">
-          <Link className="title-link-text" href="#">
-            CRTV_SHELVES
-          </Link>
-        </div>
-      </div>
-      <div className="user-interact-button">
-        <Link className="nav-user-button text-amber-300" href="#">
-          User-Button
-        </Link>
-      </div>
-    </nav>
-  );
-}
-
-function UserActionNav() {
-  return (
-    <aside className="flex w-64 flex-col border-t-2 border-r-1 bg-gray-950 rounded-xl">
-      <nav className="font-family-inter flex flex-col gap-4 border-t-2 border-r-1 p-4 font-semibold text-gray-200">
-        <Link href="#">My Shelves</Link>
-        <Link href="#">Create Shelf</Link>
-        <Link href="#">Add Friend </Link>
-        <Link href="#">Settings</Link>
-        <Link href="#">Logout</Link>
-      </nav>
-    </aside>
-  );
-}
-
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${montserrat.variable}`}>
       <body className="flex h-screen flex-col bg-black">
-        <TopNav />
         <div className="flex flex-1 overflow-hidden border-t border-r-2 border-gray-800 bg-gray-950">
-          <UserActionNav />
           <div className="flex-1 overflow-y-auto">{children}</div>
         </div>
+        {/* <div className="thankyous text-white">
+          <a
+            target="_blank"
+            href="https://icons8.com/icon/m5sL5chjsPar/shelves"
+          >
+            Shelves
+          </a>{" "}
+          icon by{" "}
+          <a target="_blank" href="https://icons8.com">
+            Icons8
+          </a>
+        </div> */}
       </body>
     </html>
   );

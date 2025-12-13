@@ -16,16 +16,16 @@ export default function HomePage() {
         <Link
           className="border-all bg-4/80 rounded-xl p-4 font-semibold text-white shadow-xl/30"
           href="#"
-          id="splash->login"
+          id="create_first->add_shelf"
         >
-          Login
+          Create My First Shelf
         </Link>
         <Link
           className="border-all bg-5/80 rounded-xl p-4 font-semibold text-white shadow-xl/30"
           href="#"
-          id="splash->signup"
+          id="connect_first->add_friend"
         >
-          Signup
+          Connect with Friends!
         </Link>
       </div>
     </main>
