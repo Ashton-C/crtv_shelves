@@ -26,12 +26,12 @@ const rubik = Rubik_Broken_Fax({
 function TopNav() {
   return (
     <nav className="font-family-rubik-broken-fax sticky top-0 flex w-full flex-row items-center justify-between rounded-xl border-b-1 bg-gray-950 p-4 text-xl font-semibold">
-      <div className="title-div flex w-56 flex-row items-center justify-between">
+      <div className="title-div flex flex-row items-center justify-center">
         <div className="titleicon text-amber-300">
-          <Link className="title-icon-text" href="#">
+          <Link className="title-icon-text" href="/">
             <Image
-              width={68}
-              height={68}
+              width={62}
+              height={62}
               className="m-0 p-0"
               src="data:image/png;base64,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"
               alt="external-Shelves-medical-and-healthcare-isometric-vectorslab-3"
@@ -39,7 +39,9 @@ function TopNav() {
           </Link>
         </div>
         <div className={rubik.className}>
-          <Link href="#">CRTV_SHELVES</Link>
+          <Link className="text-[3rem] text-[#F48F31]" href="#">
+            CRTV_SHELVES
+          </Link>
         </div>
       </div>
       <div className="user-interact-button">
@@ -55,10 +57,10 @@ function UserActionNav() {
   return (
     <aside className="flex w-64 flex-col rounded-xl border-t-2 border-r-1 bg-gray-950">
       <nav className="font-family-inter flex flex-col gap-4 border-t-2 border-r-1 p-4 font-semibold text-gray-200">
-        <Link href="#">My Shelves</Link>
-        <Link href="#">Create Shelf</Link>
-        <Link href="#">Add Friend </Link>
-        <Link href="#">Settings</Link>
+        <Link href="/dashboard/display">My Shelves</Link>
+        <Link href="/dashboard/create_shelf">Create Shelf</Link>
+        <Link href="/dashboard/manage_friends">Manage Friends</Link>
+        <Link href="/dashboard/settings">Settings</Link>
         <Link href="#">Logout</Link>
       </nav>
     </aside>
@@ -69,14 +71,12 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${montserrat.variable}`}>
-      <body className="flex h-screen flex-col bg-black">
-        <TopNav />
-        <div className="flex flex-1 overflow-hidden border-t border-r-2 border-gray-800 bg-gray-950">
-          <UserActionNav />
-          <div className="flex-1 overflow-y-auto">{children}</div>
-        </div>
-      </body>
-    </html>
+    <div className="flex h-screen flex-col bg-black">
+      <TopNav />
+      <div className="flex flex-1 overflow-hidden border-t border-r-2 border-gray-800 bg-gray-950">
+        <UserActionNav />
+        <div className="flex-1 overflow-y-auto">{children}</div>
+      </div>
+    </div>
   );
 }

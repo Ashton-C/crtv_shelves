@@ -12,20 +12,27 @@ export default function HomePage() {
           Let&apos;s get you set up!
         </p>
       </div>
-      <div className="first-visit-buttons flex gap-4 flex-row justify-between">
+      <div className="first-visit-buttons flex flex-row justify-between gap-4">
         <Link
           className="border-all bg-4/80 rounded-xl p-4 font-semibold text-white shadow-xl/30"
-          href="#"
+          href="/login"
           id="splash->login"
         >
           Login
         </Link>
         <Link
           className="border-all bg-5/80 rounded-xl p-4 font-semibold text-white shadow-xl/30"
-          href="#"
+          href="/signup"
           id="splash->signup"
         >
           Signup
+        </Link>
+        <Link
+          className="border-all bg-5/80 rounded-xl p-4 font-semibold text-white shadow-xl/30"
+          href="/about"
+          id="back_to_dash_button"
+        >
+          About
         </Link>
       </div>
     </main>

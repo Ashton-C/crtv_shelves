@@ -12,17 +12,17 @@ export default function HomePage() {
           Let&apos;s get you set up!
         </p>
       </div>
-      <div className="first-visit-buttons flex gap-4 flex-row justify-between">
+      <div className="first-visit-buttons flex flex-row justify-between gap-4">
         <Link
           className="border-all bg-4/80 rounded-xl p-4 font-semibold text-white shadow-xl/30"
-          href="#"
+          href="/dashboard/create_shelf"
           id="create_first->add_shelf"
         >
           Create My First Shelf
         </Link>
         <Link
           className="border-all bg-5/80 rounded-xl p-4 font-semibold text-white shadow-xl/30"
-          href="#"
+          href="/dashboard/manage_friends"
           id="connect_first->add_friend"
         >
           Connect with Friends!
