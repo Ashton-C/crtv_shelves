@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>crtv_shelves — web</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700;1,800;1,900&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script src="crtv-data.js"></script>
+  <script type="text/babel" src="browser-window.jsx"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0a0a; font-family: 'Inter', sans-serif; }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #2E2D2D; border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState } = React;
+
+const WEB_BG     = '#131313';
+const WEB_SURF   = '#1C1B1B';
+const WEB_SURF2  = '#242323';
+const WEB_BORD   = '#2E2D2D';
+const WEB_TEXT   = '#F0EEEC';
+const WEB_MUTED  = '#7A7775';
+const WEB_ACCENT = '#FF5F00';
+const WEB_GOLD   = '#FFBD00';
+const WEB_VIOLET = '#6236FF';
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function Img({ item, size, radius = 8 }) {
+  const [err, setErr] = useState(false);
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: radius, flexShrink: 0, overflow: 'hidden',
+      background: `linear-gradient(135deg, ${item.c1}, ${item.c2})`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative',
+    }}>
+      {item.img && !err
+        ? <img src={item.img} alt={item.name} onError={() => setErr(true)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        : <span style={{ fontFamily: 'Inter', fontWeight: 800, fontSize: size * 0.26, color: 'rgba(255,255,255,0.3)' }}>{item.init}</span>
+      }
+    </div>
+  );
+}
+
+// ── Left nav ─────────────────────────────────────────────────────────────────
+function LeftNav({ activeUser }) {
+  const navItems = [
+    { label: 'profile',   active: true  },
+    { label: 'friends',   active: false },
+    { label: 'explore',   active: false },
+    { label: 'settings',  active: false },
+  ];
+  return (
+    <div style={{
+      width: 200, flexShrink: 0, borderRight: `1px solid ${WEB_BORD}`,
+      display: 'flex', flexDirection: 'column', padding: '28px 0',
+      background: WEB_BG,
+    }}>
+      {/* Logo */}
+      <div style={{ padding: '0 20px 28px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: `1px solid ${WEB_BORD}` }}>
+        <div style={{ display: 'flex', gap: 2.5, alignItems: 'flex-end' }}>
+          {[0,1,2,3].map(i => <div key={i} style={{ width: 4, height: 6 + i*4, borderRadius: 1.5, background: WEB_ACCENT }} />)}
+        </div>
+        <span style={{ fontFamily: 'Inter', fontWeight: 900, fontStyle: 'italic', fontSize: 14, color: WEB_TEXT, letterSpacing: '-0.5px' }}>crtv_shelves</span>
+      </div>
+
+      {/* Avatar */}
+      <div style={{ padding: '20px 20px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 12, background: 'linear-gradient(135deg, #FF5F00, #CC3A00)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ fontFamily: 'Inter', fontWeight: 900, fontSize: 13, color: 'white' }}>jd</span>
+          </div>
+          <div>
+            <div style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 13, color: WEB_TEXT }}>jd.taste</div>
+            <div style={{ fontFamily: 'Inter', fontSize: 10, color: WEB_MUTED }}>4 shelves</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Nav items */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '0 10px' }}>
+        {navItems.map(item => (
+          <div key={item.label} style={{
+            padding: '8px 12px', borderRadius: 10, cursor: 'pointer',
+            background: item.active ? `rgba(255,95,0,0.1)` : 'transparent',
+            color: item.active ? WEB_ACCENT : WEB_MUTED,
+            fontFamily: 'Inter', fontWeight: item.active ? 700 : 500, fontSize: 13,
+            letterSpacing: '-0.2px', transition: 'all 0.15s',
+          }}>{item.label}</div>
+        ))}
+      </div>
+
+      {/* Friends mini list */}
+      <div style={{ marginTop: 20, padding: '0 10px' }}>
+        <div style={{ padding: '4px 12px 10px', fontFamily: 'Inter', fontWeight: 700, fontSize: 10, color: '#3A3938', letterSpacing: '0.8px', textTransform: 'uppercase' }}>friends</div>
+        {FRIENDS.slice(0, 4).map(f => (
+          <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderRadius: 10, cursor: 'pointer' }}
+            onMouseEnter={e => e.currentTarget.style.background = WEB_SURF}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+            <div style={{ width: 24, height: 24, borderRadius: 8, background: `linear-gradient(135deg, ${f.color}, ${f.color}88)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <span style={{ fontFamily: 'Inter', fontWeight: 800, fontSize: 9, color: 'white' }}>{f.initials}</span>
+            </div>
+            <span style={{ fontFamily: 'Inter', fontSize: 12, color: WEB_MUTED, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name}</span>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ marginTop: 'auto', padding: '16px 20px 0', borderTop: `1px solid ${WEB_BORD}` }}>
+        <div style={{ fontFamily: 'Inter', fontSize: 10, color: '#3A3938' }}>crtv.sh/jd.taste</div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main profile content ───────────────────────────────────────────────────────
+function ProfileMain({ selectedShelf, onSelect }) {
+  return (
+    <div style={{ flex: 1, overflowY: 'auto', background: WEB_BG, padding: '32px 36px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 32 }}>
+        <div>
+          <div style={{ fontFamily: 'Inter', fontWeight: 900, fontSize: 32, color: WEB_TEXT, letterSpacing: '-1.5px' }}>jd.taste</div>
+          <div style={{ fontFamily: 'Inter', fontSize: 13, color: WEB_MUTED, marginTop: 4 }}>4 shelves · 509 total views · joined 2024</div>
+        </div>
+        <button style={{
+          display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px',
+          borderRadius: 14, border: 'none', cursor: 'pointer',
+          background: `rgba(255,95,0,0.15)`, color: WEB_ACCENT,
+          fontFamily: 'Inter', fontWeight: 700, fontSize: 13,
+        }}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="10" cy="3" r="2" stroke="currentColor" strokeWidth="1.5"/>
+            <circle cx="4" cy="7" r="2" stroke="currentColor" strokeWidth="1.5"/>
+            <circle cx="10" cy="11" r="2" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M6 6l3-2M6 8l3 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          share profile
+        </button>
+      </div>
+
+      {/* Shelf grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+        {SHELVES.map(shelf => {
+          const isSelected = selectedShelf?.id === shelf.id;
+          const topItems = shelf.items.slice(0, shelf.size === 'podium' ? 3 : shelf.size === 'focus' ? 5 : 8);
+          return (
+            <div key={shelf.id} onClick={() => onSelect(shelf)} style={{
+              background: isSelected ? `rgba(255,95,0,0.06)` : WEB_SURF,
+              border: `1.5px solid ${isSelected ? WEB_ACCENT : WEB_BORD}`,
+              borderRadius: 20, overflow: 'hidden', cursor: 'pointer',
+              transition: 'all 0.18s',
+            }}
+            onMouseEnter={e => { if (!isSelected) { e.currentTarget.style.background = WEB_SURF2; e.currentTarget.style.borderColor = '#3A3938'; }}}
+            onMouseLeave={e => { if (!isSelected) { e.currentTarget.style.background = WEB_SURF; e.currentTarget.style.borderColor = WEB_BORD; }}}>
+              {/* Gradient strip */}
+              <div style={{
+                height: 4, background: `linear-gradient(90deg, ${shelf.items[0]?.c1}, ${shelf.items[0]?.c2})`,
+              }} />
+              <div style={{ padding: '18px 20px' }}>
+                {/* Header row */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                  <div>
+                    <div style={{ fontFamily: 'Inter', fontWeight: 900, fontStyle: 'italic', fontSize: 17, color: WEB_TEXT, letterSpacing: '-0.5px' }}>{shelf.name}</div>
+                    <div style={{ display: 'inline-flex', marginTop: 4, background: `rgba(255,189,0,0.12)`, borderRadius: 6, padding: '2px 8px' }}>
+                      <span style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 10, color: WEB_GOLD, letterSpacing: '0.4px', textTransform: 'uppercase' }}>{shelf.category} · {shelf.type}</span>
+                    </div>
+                  </div>
+                  <span style={{ fontFamily: 'Inter', fontSize: 11, color: WEB_MUTED }}>{shelf.shareCount} views</span>
+                </div>
+                {/* Top 3 items horizontal */}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {topItems.slice(0, 3).map((item, i) => (
+                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 0,
+                      background: WEB_BG, borderRadius: 10, padding: '7px 9px' }}>
+                      <span style={{ fontFamily: 'Inter', fontWeight: 900, fontSize: 11, color: i === 0 ? WEB_GOLD : WEB_MUTED, width: 12, flexShrink: 0 }}>{i + 1}</span>
+                      <Img item={item} size={28} radius={6} />
+                      <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: 11, color: WEB_TEXT, letterSpacing: '-0.2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</span>
+                    </div>
+                  ))}
+                </div>
+                {topItems.length > 3 && (
+                  <div style={{ marginTop: 8, fontFamily: 'Inter', fontSize: 11, color: WEB_MUTED }}>+{topItems.length - 3} more</div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* New shelf card */}
+        <div style={{
+          background: 'transparent', border: `1.5px dashed ${WEB_BORD}`, borderRadius: 20,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          padding: '32px', gap: 10, cursor: 'pointer', minHeight: 160,
+          transition: 'all 0.2s', opacity: 0.4,
+        }}
+        onMouseEnter={e => { e.currentTarget.style.opacity = '0.8'; e.currentTarget.style.borderColor = WEB_ACCENT; }}
+        onMouseLeave={e => { e.currentTarget.style.opacity = '0.4'; e.currentTarget.style.borderColor = WEB_BORD; }}>
+          <div style={{ width: 36, height: 36, borderRadius: 12, border: `1.5px solid ${WEB_BORD}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke={WEB_MUTED} strokeWidth="2" strokeLinecap="round"/></svg>
+          </div>
+          <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: 13, color: WEB_MUTED }}>new shelf</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Right shelf detail panel ───────────────────────────────────────────────────
+function ShelfDetail({ shelf }) {
+  const [copied, setCopied] = useState(false);
+  if (!shelf) return (
+    <div style={{ width: 300, flexShrink: 0, borderLeft: `1px solid ${WEB_BORD}`, background: WEB_BG,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, padding: 32 }}>
+      <div style={{ width: 48, height: 48, borderRadius: 16, border: `1.5px solid ${WEB_BORD}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 10h10M10 5l5 5-5 5" stroke={WEB_MUTED} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      </div>
+      <span style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: 13, color: WEB_MUTED, textAlign: 'center' }}>select a shelf to preview</span>
+    </div>
+  );
+
+  const displayCount = shelf.size === 'podium' ? 3 : shelf.size === 'focus' ? 5 : 8;
+  const items = shelf.items.slice(0, displayCount);
+  const dominantColor = shelf.items[0]?.c1 || '#333';
+
+  return (
+    <div style={{ width: 300, flexShrink: 0, borderLeft: `1px solid ${WEB_BORD}`, background: WEB_BG, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+      {/* Gradient header */}
+      <div style={{
+        background: `linear-gradient(160deg, ${dominantColor} 0%, ${dominantColor}99 50%, ${WEB_BG} 100%)`,
+        padding: '28px 24px 20px', flexShrink: 0,
+      }}>
+        <div style={{ display: 'inline-flex', background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(8px)', borderRadius: 7, padding: '3px 8px', marginBottom: 12 }}>
+          <span style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 10, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>{shelf.category} · {shelf.type}</span>
+        </div>
+        <div style={{ fontFamily: 'Inter', fontWeight: 900, fontStyle: 'italic', fontSize: 22, color: WEB_TEXT, letterSpacing: '-0.8px', marginBottom: 6 }}>{shelf.name}</div>
+        <div style={{ fontFamily: 'Inter', fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>jd.taste · {shelf.shareCount} views</div>
+      </div>
+
+      {/* Edit + Share buttons */}
+      <div style={{ padding: '12px 20px', borderBottom: `1px solid ${WEB_BORD}`, display: 'flex', gap: 8 }}>
+        <button style={{
+          flex: 1, padding: '9px', borderRadius: 12, border: `1px solid ${WEB_BORD}`, cursor: 'pointer',
+          background: WEB_SURF2, color: WEB_TEXT,
+          fontFamily: 'Inter', fontWeight: 700, fontSize: 13, letterSpacing: '-0.2px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+        }}>
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <path d="M9 2l2 2-6 6H3V8l6-6z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          edit
+        </button>
+        <button onClick={() => { setCopied(true); setTimeout(() => setCopied(false), 1800); }} style={{
+          flex: 1, padding: '9px', borderRadius: 12, border: 'none', cursor: 'pointer',
+          background: copied ? `rgba(255,95,0,0.2)` : WEB_SURF2,
+          color: copied ? WEB_ACCENT : WEB_MUTED,
+          fontFamily: 'Inter', fontWeight: 700, fontSize: 13,
+          transition: 'all 0.2s', letterSpacing: '-0.2px',
+        }}>{copied ? '✓ copied' : 'share'}</button>
+      </div>
+
+      {/* Ranked list */}
+      <div style={{ flex: 1, padding: '8px 0' }}>
+        {items.map((item, i) => (
+          <div key={item.id} style={{
+            display: 'flex', alignItems: 'center', gap: 12, padding: '9px 20px',
+            position: 'relative', overflow: 'hidden',
+            borderBottom: i < items.length - 1 ? `1px solid ${WEB_BORD}` : 'none',
+          }}>
+            {/* Ghost rank */}
+            <span style={{
+              position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)',
+              fontFamily: 'Inter', fontWeight: 900, fontSize: 64,
+              color: 'rgba(255,255,255,0.03)', lineHeight: 1, userSelect: 'none', pointerEvents: 'none',
+            }}>{i + 1}</span>
+            <span style={{ fontFamily: 'Inter', fontWeight: 900, fontSize: 12, color: i === 0 ? WEB_GOLD : WEB_MUTED, width: 16, textAlign: 'center', flexShrink: 0 }}>{i + 1}</span>
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <Img item={item} size={42} />
+              <span style={{
+                position: 'absolute', bottom: -3, right: -3,
+                fontFamily: 'Inter', fontWeight: 900, fontSize: 28,
+                color: 'rgba(255,255,255,0.2)', lineHeight: 1, userSelect: 'none', letterSpacing: '-1px',
+              }}>{i + 1}</span>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 13, color: WEB_TEXT, letterSpacing: '-0.3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
+              <div style={{ fontFamily: 'Inter', fontSize: 11, color: WEB_MUTED, marginTop: 1 }}>{item.sub}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Web App ────────────────────────────────────────────────────────────────────
+function WebApp() {
+  const [selectedShelf, setSelectedShelf] = useState(SHELVES[0]);
+
+  return (
+    <div style={{ display: 'flex', width: '100%', height: '100%', background: WEB_BG }}>
+      <LeftNav />
+      <ProfileMain selectedShelf={selectedShelf} onSelect={setSelectedShelf} />
+      <ShelfDetail shelf={selectedShelf} />
+    </div>
+  );
+}
+
+// ── Root ───────────────────────────────────────────────────────────────────────
+function App() {
+  return (
+    <div style={{
+      width: '100vw', height: '100vh',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: '#0a0a0a',
+    }}>
+      <ChromeWindow
+        tabs={[{ title: 'crtv_shelves — jd.taste' }, { title: 'New Tab' }]}
+        activeIndex={0}
+        url="crtv.sh/jd.taste"
+        width={1100}
+        height={680}
+      >
+        <WebApp />
+      </ChromeWindow>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
