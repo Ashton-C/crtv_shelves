@@ -38,5 +38,5 @@
     "**/*.js",
     ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "generated"]
+  "exclude": ["node_modules", "generated", "design_handoff_crtv_shelves"]
 }

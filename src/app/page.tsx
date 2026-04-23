@@ -1,40 +1,65 @@
+"use client";
+
+import { motion } from "framer-motion";
 import Link from "next/link";
 
-export default function HomePage() {
+function LogoBars() {
   return (
-    <main className="from-5 sticky flex h-full w-full flex-col items-center justify-center rounded-xl bg-gradient-to-b to-gray-950 text-white">
-      <div className="container flex flex-col flex-wrap items-center justify-center gap-12 px-4 py-16 text-xl text-black">
-        <h1 className="hero-text text-3xl text-white">
-          Hi there! Welcome to CRTV_SHELVES!
-        </h1>
-        <p className="disc-p text-4 align-center w-3/4 justify-center font-mono">
-          Your journey to curate and share your favorite media starts here.
-          Let&apos;s get you set up!
+    <div className="flex items-end gap-[3px]">
+      {[6, 10, 14, 18].map((h, i) => (
+        <div key={i} className="w-2 rounded-sm bg-white" style={{ height: h }} />
+      ))}
+    </div>
+  );
+}
+
+export default function WelcomePage() {
+  return (
+    <main
+      className="flex min-h-screen flex-col items-center justify-center px-6"
+      style={{
+        background: "linear-gradient(160deg, #FF5F00, #CC3A00 45%, #131313)",
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.08 }}
+        className="flex w-full max-w-xs flex-col items-center gap-8"
+      >
+        <div className="flex flex-col items-center gap-3 text-center">
+          <LogoBars />
+          <h1 className="text-[34px] font-black italic tracking-tight text-white">
+            crtv_shelves
+          </h1>
+          <p className="text-[15px] font-medium text-white/70">
+            rank what you love.
+          </p>
+          <p className="max-w-[240px] text-[13px] leading-relaxed text-white/45">
+            build ranked lists for the music, films, and shows that define you.
+            share them with friends.
+          </p>
+        </div>
+
+        <div className="flex w-full flex-col gap-3">
+          <Link
+            href="/dashboard"
+            className="flex w-full items-center justify-center rounded-[20px] bg-white px-4 py-4 text-[16px] font-bold text-[#131313] transition-opacity hover:opacity-90"
+          >
+            get started
+          </Link>
+          <Link
+            href="/login"
+            className="flex w-full items-center justify-center rounded-[20px] border border-white/30 px-4 py-4 text-[16px] font-bold text-white transition-opacity hover:opacity-80"
+          >
+            sign in
+          </Link>
+        </div>
+
+        <p className="text-[11px] font-medium tracking-widest text-white/30">
+          SOCIAL · BY · LINK
         </p>
-      </div>
-      <div className="first-visit-buttons flex flex-row justify-between gap-4">
-        <Link
-          className="border-all bg-4/80 rounded-xl p-4 font-semibold text-white shadow-xl/30"
-          href="/login"
-          id="splash->login"
-        >
-          Login
-        </Link>
-        <Link
-          className="border-all bg-5/80 rounded-xl p-4 font-semibold text-white shadow-xl/30"
-          href="/signup"
-          id="splash->signup"
-        >
-          Signup
-        </Link>
-        <Link
-          className="border-all bg-5/80 rounded-xl p-4 font-semibold text-white shadow-xl/30"
-          href="/about"
-          id="back_to_dash_button"
-        >
-          About
-        </Link>
-      </div>
+      </motion.div>
     </main>
   );
 }

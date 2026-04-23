@@ -1,33 +1,17 @@
-import Link from "next/link";
+import { ProfileFeed } from "~/components/profile-feed";
 
-export default function HomePage() {
+export default function DashboardPage() {
   return (
-    <main className="from-5 sticky flex h-full w-full flex-col items-center justify-center rounded-xl bg-gradient-to-b to-gray-950 text-white">
-      <div className="container flex flex-col flex-wrap items-center justify-center gap-12 px-4 py-16 text-xl text-black">
-        <h1 className="hero-text text-3xl text-white">
-          Hi there! Welcome to CRTV_SHELVES!
-        </h1>
-        <p className="disc-p text-4 align-center w-3/4 justify-center font-mono">
-          Your journey to curate and share your favorite media starts here.
-          Let&apos;s get you set up!
-        </p>
+    <>
+      {/* Mobile: full-screen profile feed */}
+      <div className="lg:hidden">
+        <ProfileFeed />
       </div>
-      <div className="first-visit-buttons flex flex-row justify-between gap-4">
-        <Link
-          className="border-all bg-4/80 rounded-xl p-4 font-semibold text-white shadow-xl/30"
-          href="/dashboard/create_shelf"
-          id="create_first->add_shelf"
-        >
-          Create My First Shelf
-        </Link>
-        <Link
-          className="border-all bg-5/80 rounded-xl p-4 font-semibold text-white shadow-xl/30"
-          href="/dashboard/manage_friends"
-          id="connect_first->add_friend"
-        >
-          Connect with Friends!
-        </Link>
+
+      {/* Desktop: empty state while no shelf is selected */}
+      <div className="hidden h-full items-center justify-center lg:flex">
+        <p className="text-[14px] text-muted">select a shelf to view it here</p>
       </div>
-    </main>
+    </>
   );
 }
