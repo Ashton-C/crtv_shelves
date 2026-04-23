@@ -1,8 +1,7 @@
 import "~/styles/globals.css";
 
 import { type Metadata } from "next";
-import { Montserrat, Rubik_Broken_Fax } from "next/font/google";
-import Link from "next/link";
+import { Montserrat } from "next/font/google";
 
 export const metadata: Metadata = {
   title: "CRTV_Shelves",

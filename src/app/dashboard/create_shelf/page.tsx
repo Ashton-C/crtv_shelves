@@ -40,7 +40,7 @@ export default function CreateShelfPage() {
   const [otherShelfType, setOtherShelfType] = useState("");
   const [listLength, setListLength] = useState(3);
   const [hideFromFriends, setHideFromFriends] = useState(false);
-  const [listItems, setListItems] = useState(Array(3).fill(""));
+  const [listItems, setListItems] = useState<string[]>(Array(3).fill("") as string[]);
   const [showConfetti, setShowConfetti] = useState(false);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
 
@@ -64,7 +64,7 @@ export default function CreateShelfPage() {
   const handleListLengthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const length = parseInt(e.target.value, 10);
     setListLength(length);
-    setListItems(Array(length).fill(""));
+    setListItems(Array(length).fill("") as string[]);
   };
 
   const handleListItemChange = (index: number, value: string) => {
