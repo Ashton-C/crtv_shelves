@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>crtv_shelves</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script src="crtv-data.js"></script>
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" src="crtv-components.jsx"></script>
+  <script type="text/babel" src="crtv-screens.jsx"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0a0a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    ::-webkit-scrollbar { width: 0; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Tweaks panel */
+    #tweaks-panel {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      background: #1C1B1B; border: 1px solid #2E2D2D;
+      border-radius: 20px; padding: 20px;
+      width: 220px; display: none; flex-direction: column; gap: 16px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+      font-family: 'Inter', sans-serif;
+    }
+    #tweaks-panel.visible { display: flex; }
+    .tweak-label { font-size: 10px; font-weight: 700; color: #7A7775; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 6px; }
+    .tweak-row { display: flex; gap: 6px; }
+    .tweak-btn {
+      flex: 1; padding: 7px 4px; border-radius: 10px; border: 1px solid #2E2D2D;
+      background: #242323; color: #F0EEEC; font-family: 'Inter'; font-size: 11px; font-weight: 600;
+      cursor: pointer; transition: all 0.15s; text-align: center;
+    }
+    .tweak-btn.active { background: rgba(255,95,0,0.2); border-color: #FF5F00; color: #FF5F00; }
+  </style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<!-- Tweaks panel -->
+<div id="tweaks-panel">
+  <div style="font-size:13px;font-weight:800;color:#F0EEEC;letter-spacing:-0.3px;margin-bottom:4px">Tweaks</div>
+
+  <div>
+    <div class="tweak-label">Grid columns</div>
+    <div class="tweak-row">
+      <button class="tweak-btn active" id="grid-2" onclick="setGrid(2)">2 col</button>
+      <button class="tweak-btn" id="grid-3" onclick="setGrid(3)">3 col</button>
+    </div>
+  </div>
+
+  <div>
+    <div class="tweak-label">Accent color</div>
+    <div class="tweak-row">
+      <button class="tweak-btn active" id="accent-orange" onclick="setAccent('#FF5F00','orange')" style="background:rgba(255,95,0,0.2);border-color:#FF5F00;color:#FF5F00">●</button>
+      <button class="tweak-btn" id="accent-blue" onclick="setAccent('#0088FF','blue')" style="color:#0088FF">●</button>
+      <button class="tweak-btn" id="accent-gold" onclick="setAccent('#FFBD00','gold')" style="color:#FFBD00">●</button>
+      <button class="tweak-btn" id="accent-violet" onclick="setAccent('#6236FF','violet')" style="color:#6236FF">●</button>
+    </div>
+  </div>
+
+  <div>
+    <div class="tweak-label">Start screen</div>
+    <div class="tweak-row" style="flex-wrap:wrap;gap:4px">
+      <button class="tweak-btn" style="flex:none;padding:5px 8px" onclick="window.__navigateTo&&window.__navigateTo('welcome')">Welcome</button>
+      <button class="tweak-btn" style="flex:none;padding:5px 8px" onclick="window.__navigateTo&&window.__navigateTo('profile')">Profile</button>
+      <button class="tweak-btn" style="flex:none;padding:5px 8px" onclick="window.__navigateTo&&window.__navigateTo('shelf',{shelf:SHELVES[0]})">Shelf</button>
+      <button class="tweak-btn" style="flex:none;padding:5px 8px" onclick="window.__navigateTo&&window.__navigateTo('friends')">Friends</button>
+      <button class="tweak-btn" style="flex:none;padding:5px 8px" onclick="window.__navigateTo&&window.__navigateTo('create_basics')">Create</button>
+      <button class="tweak-btn" style="flex:none;padding:5px 8px" onclick="window.__navigateTo&&window.__navigateTo('settings')">Settings</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Tweaks wiring
+  let currentGrid = 2;
+  function setGrid(n) {
+    currentGrid = n;
+    document.getElementById('grid-2').classList.toggle('active', n === 2);
+    document.getElementById('grid-3').classList.toggle('active', n === 3);
+    window.__setTweaks && window.__setTweaks({ gridCols: n });
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { gridCols: n } }, '*');
+  }
+
+  const accentIds = ['orange','blue','gold','violet'];
+  function setAccent(color, id) {
+    accentIds.forEach(a => document.getElementById('accent-' + a).classList.remove('active'));
+    document.getElementById('accent-' + id).classList.add('active');
+    window.__setTweaks && window.__setTweaks({ accentColor: color });
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { accentColor: color } }, '*');
+  }
+
+  window.addEventListener('message', e => {
+    if (e.data?.type === '__activate_edit_mode')   document.getElementById('tweaks-panel').classList.add('visible');
+    if (e.data?.type === '__deactivate_edit_mode') document.getElementById('tweaks-panel').classList.remove('visible');
+  });
+  window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+</script>
+
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "gridCols": 2,
+  "accentColor": "#FF5F00"
+}/*EDITMODE-END*/;
+
+const { useState, useEffect, useRef, useCallback } = React;
+
+function App() {
+  const saved = (() => { try { return JSON.parse(localStorage.getItem('crtv_nav') || '{}'); } catch { return {}; } })();
+  const [screen, setScreen]   = useState(saved.screen || 'welcome');
+  const [params, setParams]   = useState(saved.params || {});
+  const [history, setHistory] = useState([]);
+  const [tweaks, setTweaks]   = useState(TWEAK_DEFAULTS);
+  const [transition, setTransition] = useState(false);
+
+  // Expose navigate + tweaks to window for external tweaks panel
+  window.__navigateTo = (s, p) => navigate(s, p);
+  window.__setTweaks  = (t) => setTweaks(prev => ({ ...prev, ...t }));
+
+  const navigate = useCallback((newScreen, newParams = {}) => {
+    setTransition(true);
+    setTimeout(() => {
+      setHistory(h => [...h, { screen, params }]);
+      setScreen(newScreen);
+      setParams(newParams);
+      setTransition(false);
+      try { localStorage.setItem('crtv_nav', JSON.stringify({ screen: newScreen, params: {} })); } catch {}
+    }, 120);
+  }, [screen, params]);
+
+  const screenProps = { navigate, params, tweaks };
+
+  const screenMap = {
+    welcome:         <WelcomeScreen         {...screenProps} />,
+    profile:         <ProfileScreen         {...screenProps} />,
+    shelf:           <ShelfScreen           {...screenProps} />,
+    friend_shelf:    <ShelfScreen           {...screenProps} />,
+    friends:         <FriendsScreen         {...screenProps} />,
+    create_basics:   <CreateBasicsScreen    {...screenProps} />,
+    create_name:     <CreateNameScreen      {...screenProps} />,
+    create_size:     <CreateSizeScreen      {...screenProps} />,
+    create_curation: <CreateCurationScreen  {...screenProps} />,
+    search:          <SearchScreen          {...screenProps} />,
+    reorder:         <ReorderScreen         {...screenProps} />,
+    settings:        <SettingsScreen        {...screenProps} />,
+  };
+
+  const cssVars = {
+    '--accent': tweaks.accentColor || '#FF5F00',
+  };
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100vw', height: '100vh', ...cssVars }}>
+      {/* Mobile phone */}
+      <div style={{ position: 'relative', flexShrink: 0 }}>
+        <IOSDevice dark={true}>
+          <div style={{
+            width: '100%', height: '100%', position: 'relative', overflow: 'hidden',
+            opacity: transition ? 0 : 1,
+            transition: 'opacity 0.12s ease',
+          }}>
+            {screenMap[screen] || screenMap['profile']}
+          </div>
+        </IOSDevice>
+      </div>
+
+      {/* Desktop sidebar */}
+      <div style={{
+        marginLeft: 40, width: 200, display: 'flex', flexDirection: 'column', gap: 2,
+        maxHeight: '86vh', overflowY: 'auto', paddingRight: 4,
+      }}>
+        {/* Logo */}
+        <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 2, alignItems: 'flex-end' }}>
+            {[0,1,2,3].map(i => <div key={i} style={{ width: 4, height: 6 + i * 4, borderRadius: 1.5, background: tweaks.accentColor || '#FF5F00' }} />)}
+          </div>
+          <span style={{ fontFamily: 'Inter', fontWeight: 900, fontStyle: 'italic', fontSize: 13, color: '#F0EEEC', letterSpacing: '-0.5px' }}>crtv_shelves</span>
+        </div>
+
+        {/* Screen sections */}
+        {[
+          { section: 'Core', items: [
+            { id: 'welcome',  label: 'Welcome' },
+            { id: 'profile',  label: 'Profile Feed' },
+            { id: 'friends',  label: 'Friends' },
+            { id: 'settings', label: 'Settings' },
+            { id: 'reorder',  label: 'Reorder' },
+            { id: 'search',   label: 'Item Search' },
+          ]},
+          { section: 'Shelf View', items: SHELVES.map(s => ({
+            id: 'shelf', label: s.name, p: { shelf: s }, shelfId: s.id,
+            color: s.items[0]?.c1,
+          }))},
+          { section: 'Create Flow', items: [
+            { id: 'create_basics',   label: '① Category' },
+            { id: 'create_name',     label: '② Name' },
+            { id: 'create_size',     label: '③ Format' },
+            { id: 'create_curation', label: '④ Curation', p: { size: SIZES[1] } },
+          ]},
+        ].map(({ section, items }) => (
+          <div key={section} style={{ marginBottom: 14 }}>
+            <div style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: 9, color: '#4A4948', letterSpacing: '1px', textTransform: 'uppercase', padding: '0 10px', marginBottom: 4 }}>{section}</div>
+            {items.map(item => {
+              const isActive = item.shelfId
+                ? screen === 'shelf' && params?.shelf?.id === item.shelfId
+                : screen === item.id;
+              const accent = tweaks.accentColor || '#FF5F00';
+              return (
+                <button key={item.shelfId || item.id + item.label}
+                  onClick={() => navigate(item.id, item.p || {})}
+                  style={{
+                    width: '100%', padding: '7px 10px', borderRadius: 9, border: 'none', cursor: 'pointer',
+                    background: isActive ? `${accent}18` : 'transparent',
+                    color: isActive ? accent : '#6A6866',
+                    fontFamily: 'Inter', fontWeight: isActive ? 700 : 500, fontSize: 12,
+                    letterSpacing: '-0.2px', textAlign: 'left', transition: 'all 0.15s',
+                    display: 'flex', alignItems: 'center', gap: 8,
+                  }}
+                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                >
+                  {item.color && (
+                    <div style={{ width: 8, height: 8, borderRadius: 2, flexShrink: 0, background: isActive ? accent : item.color, transition: 'background 0.2s' }} />
+                  )}
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+
+        {/* Build info */}
+        <div style={{ marginTop: 'auto', paddingTop: 16, borderTop: '1px solid #2E2D2D' }}>
+          <p style={{ fontFamily: 'Inter', fontSize: 10, color: '#3A3938', letterSpacing: '0.3px', lineHeight: 1.6 }}>
+            crtv_shelves v1.0<br/>Vivid Sonic · {tweaks.accentColor}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>

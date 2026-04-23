@@ -1,0 +1,23 @@
+{
+  "name": "crtv_shelves",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "22" }
+  },
+  "postCreateCommand": "npm install -g pnpm@10.22.0 && pnpm install",
+  "forwardPorts": [3000, 5432],
+  "remoteEnv": {
+    "DATABASE_URL": "postgresql://postgres:postgres@db:5432/crtv_shelves"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss"
+      ]
+    }
+  }
+}
