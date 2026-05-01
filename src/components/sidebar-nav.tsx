@@ -1,5 +1,6 @@
 "use client";
 
+import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FiPlus, FiSearch, FiSettings, FiUser, FiUsers } from "react-icons/fi";
@@ -61,6 +62,9 @@ export function SidebarNav() {
           );
         })}
       </nav>
+      <div className="border-t border-border p-4">
+        <UserButton />
+      </div>
     </aside>
   );
 }

@@ -11,6 +11,7 @@ import {
   SHELF_SIZES,
   type Category,
 } from "~/lib/mock-data";
+import { createShelf } from "~/server/actions/shelves";
 
 type Step = 1 | 2 | 3 | 4;
 type ShelfSize = "podium" | "focus" | "archive";
@@ -323,9 +324,16 @@ export default function CreateShelfPage() {
     if (step < 4) setStep((s) => (s + 1) as Step);
   };
 
-  const handleCreate = () => {
-    // TODO: server action — persist shelf, then navigate
-    router.push("/dashboard");
+  const [saving, setSaving] = useState(false);
+
+  const handleCreate = async () => {
+    setSaving(true);
+    try {
+      const result = await createShelf({ name, category, type, size, items });
+      router.push(`/dashboard/view_shelf/${result.slug}`);
+    } catch {
+      setSaving(false);
+    }
   };
 
   const valid = isStepValid(step, { category, type, name, size });
@@ -399,16 +407,16 @@ export default function CreateShelfPage() {
           </button>
         ) : (
           <button
-            onClick={handleCreate}
-            disabled={!canCreate}
+            onClick={() => void handleCreate()}
+            disabled={!canCreate || saving}
             className="w-full rounded-[18px] py-4 text-[16px] font-bold transition-all disabled:opacity-30"
             style={{
-              background: canCreate ? "#FF5F00" : "#242323",
-              color: canCreate ? "#fff" : "#7A7775",
-              boxShadow: canCreate ? "0 4px 20px rgba(255,95,0,0.4)" : "none",
+              background: canCreate && !saving ? "#FF5F00" : "#242323",
+              color: canCreate && !saving ? "#fff" : "#7A7775",
+              boxShadow: canCreate && !saving ? "0 4px 20px rgba(255,95,0,0.4)" : "none",
             }}
           >
-            create shelf
+            {saving ? "saving…" : "create shelf"}
           </button>
         )}
       </div>

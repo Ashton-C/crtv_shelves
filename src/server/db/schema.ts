@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import { index, pgTableCreator } from "drizzle-orm/pg-core";
 
 export const createTable = pgTableCreator((name) => `crtv_shelves_${name}`);
@@ -64,6 +65,18 @@ export const shelfItems = createTable(
   }),
   (t) => [index("shelf_item_shelf_idx").on(t.shelfId)],
 );
+
+// ── Relations (TypeScript-only, no schema change) ─────────────────────────────
+
+export const shelvesRelations = relations(shelves, ({ many }) => ({
+  items: many(shelfItems),
+}));
+
+export const shelfItemsRelations = relations(shelfItems, ({ one }) => ({
+  shelf: one(shelves, { fields: [shelfItems.shelfId], references: [shelves.id] }),
+}));
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export const friendships = createTable(
   "friendship",

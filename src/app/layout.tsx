@@ -1,5 +1,6 @@
 import "~/styles/globals.css";
 
+import { ClerkProvider } from "@clerk/nextjs";
 import { type Metadata } from "next";
 import { Inter } from "next/font/google";
 
@@ -19,8 +20,10 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className="bg-bg text-text antialiased">{children}</body>
-    </html>
+    <ClerkProvider afterSignOutUrl="/">
+      <html lang="en" className={inter.variable}>
+        <body className="bg-bg text-text antialiased">{children}</body>
+      </html>
+    </ClerkProvider>
   );
 }

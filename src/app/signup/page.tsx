@@ -1,18 +1,12 @@
-import Link from "next/link";
+import { SignUp } from "@clerk/nextjs";
 
-export default function HomePage() {
+export default function SignupPage() {
   return (
-    <main className="from-5 sticky flex h-full w-full flex-col items-center justify-center rounded-xl bg-gradient-to-b to-gray-950 text-white">
-      <div className="container flex flex-col flex-wrap items-center justify-center gap-12 px-4 py-16 text-xl text-black">
-        <h1 className="hero-text text-3xl text-white">Signup Page</h1>
-        <Link
-          className="border-all bg-5/80 rounded-xl p-4 font-semibold text-white shadow-xl/30"
-          href="/dashboard"
-          id="back_to_dash_button"
-        >
-          Dashboard
-        </Link>
-      </div>
+    <main
+      className="flex min-h-screen items-center justify-center px-4"
+      style={{ background: "linear-gradient(160deg, #FF5F00, #CC3A00 45%, #131313)" }}
+    >
+      <SignUp />
     </main>
   );
 }
