@@ -22,6 +22,7 @@ export function ItemThumb({ item, size = 56, rank = null }: ItemThumbProps) {
         style={{ background: `linear-gradient(135deg, ${item.c1}, ${item.c2})` }}
       />
       {!imgError && (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={item.img}
           alt={item.name}
@@ -57,6 +58,7 @@ export function CollageTile({ item }: CollageTileProps) {
       style={{ background: `linear-gradient(135deg, ${item.c1}, ${item.c2})` }}
     >
       {!imgError && (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={item.img}
           alt={item.name}

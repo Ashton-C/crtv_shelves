@@ -3,7 +3,8 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { FiArrowLeft } from "react-icons/fi";
+import { FiArrowLeft, FiSearch } from "react-icons/fi";
+import { ItemSearchModal } from "~/components/item-search-modal";
 import { StepDots } from "~/components/step-dots";
 import {
   CATEGORIES,
@@ -235,64 +236,88 @@ function Step3({
 // ── Step 4: Curation ──────────────────────────────────────────────────────────
 
 function Step4({
+  category,
   items,
   setItems,
 }: {
+  category: string;
   items: { name: string; sub: string }[];
   setItems: (items: { name: string; sub: string }[]) => void;
 }) {
-  const update = (
-    i: number,
-    field: "name" | "sub",
-    value: string,
-  ) => {
+  const [modalSlot, setModalSlot] = useState<number | null>(null);
+
+  const update = (i: number, field: "name" | "sub", value: string) => {
     const next = items.map((item, idx) =>
       idx === i ? { ...item, [field]: value } : item,
     );
     setItems(next);
   };
 
+  const handleAdd = (i: number, picked: { name: string; sub: string }) => {
+    const next = items.map((item, idx) => (idx === i ? picked : item));
+    setItems(next);
+  };
+
   return (
-    <div className="flex flex-col gap-4 p-4">
-      <div>
-        <p className="mb-1 text-[13px] text-muted">Step 4 of 4</p>
-        <h2 className="text-[22px] font-black italic tracking-tight">
-          fill your shelf
-        </h2>
+    <>
+      <div className="flex flex-col gap-4 p-4">
+        <div>
+          <p className="mb-1 text-[13px] text-muted">Step 4 of 4</p>
+          <h2 className="text-[22px] font-black italic tracking-tight">
+            fill your shelf
+          </h2>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          {items.map((item, i) => (
+            <div
+              key={i}
+              className="flex items-start gap-3 rounded-[14px] border border-border bg-surface p-3"
+            >
+              <span
+                className="mt-0.5 w-6 flex-shrink-0 text-right text-[13px] font-black"
+                style={{ color: i === 0 ? "#FF5F00" : "#7A7775" }}
+              >
+                {i + 1}
+              </span>
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <input
+                  type="text"
+                  value={item.name}
+                  onChange={(e) => update(i, "name", e.target.value)}
+                  placeholder={`#${i + 1} name`}
+                  className="w-full bg-transparent text-[14px] font-bold text-text placeholder-muted/40 outline-none"
+                />
+                <input
+                  type="text"
+                  value={item.sub}
+                  onChange={(e) => update(i, "sub", e.target.value)}
+                  placeholder="subtitle (optional)"
+                  className="w-full bg-transparent text-[11px] font-medium text-muted placeholder-muted/40 outline-none"
+                />
+              </div>
+              <button
+                onClick={() => setModalSlot(i)}
+                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] bg-surface-2 text-muted transition-colors hover:text-accent"
+              >
+                <FiSearch size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="flex flex-col gap-2">
-        {items.map((item, i) => (
-          <div
-            key={i}
-            className="flex items-start gap-3 rounded-[14px] border border-border bg-surface p-3"
-          >
-            <span
-              className="mt-0.5 w-6 flex-shrink-0 text-right text-[13px] font-black"
-              style={{ color: i === 0 ? "#FF5F00" : "#7A7775" }}
-            >
-              {i + 1}
-            </span>
-            <div className="flex flex-1 flex-col gap-1.5">
-              <input
-                type="text"
-                value={item.name}
-                onChange={(e) => update(i, "name", e.target.value)}
-                placeholder={`#${i + 1} name`}
-                className="w-full bg-transparent text-[14px] font-bold text-text placeholder-muted/40 outline-none"
-              />
-              <input
-                type="text"
-                value={item.sub}
-                onChange={(e) => update(i, "sub", e.target.value)}
-                placeholder="subtitle (optional)"
-                className="w-full bg-transparent text-[11px] font-medium text-muted placeholder-muted/40 outline-none"
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+      <AnimatePresence>
+        {modalSlot !== null && (
+          <ItemSearchModal
+            category={category}
+            slotIndex={modalSlot}
+            onAdd={(picked) => handleAdd(modalSlot, picked)}
+            onClose={() => setModalSlot(null)}
+          />
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
@@ -374,17 +399,17 @@ export default function CreateShelfPage() {
               />
             )}
             {step === 2 && (
-              <Step2
-                categoryId={category}
-                name={name}
-                setName={setName}
-              />
+              <Step2 categoryId={category} name={name} setName={setName} />
             )}
             {step === 3 && (
               <Step3 size={size} onSizeChange={handleSizeChange} />
             )}
             {step === 4 && (
-              <Step4 items={items} setItems={setItems} />
+              <Step4
+                category={category}
+                items={items}
+                setItems={setItems}
+              />
             )}
           </motion.div>
         </AnimatePresence>
@@ -413,7 +438,8 @@ export default function CreateShelfPage() {
             style={{
               background: canCreate && !saving ? "#FF5F00" : "#242323",
               color: canCreate && !saving ? "#fff" : "#7A7775",
-              boxShadow: canCreate && !saving ? "0 4px 20px rgba(255,95,0,0.4)" : "none",
+              boxShadow:
+                canCreate && !saving ? "0 4px 20px rgba(255,95,0,0.4)" : "none",
             }}
           >
             {saving ? "saving…" : "create shelf"}

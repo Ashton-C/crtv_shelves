@@ -46,7 +46,7 @@ export type ShelfSize = {
   desc: string;
 };
 
-const MUSIC_ARTISTS: Item[] = [
+export const MUSIC_ARTISTS: Item[] = [
   { id: 1, name: "Kendrick Lamar", sub: "Hip-Hop · Compton", c1: "#7C1C1C", c2: "#3D0C0C", init: "KL", img: img("kendrick97") },
   { id: 2, name: "Frank Ocean", sub: "R&B / Soul", c1: "#1A4A72", c2: "#0C2740", init: "FO", img: img("frank221") },
   { id: 3, name: "Tyler, the Creator", sub: "Hip-Hop / Neo-Soul", c1: "#1B6B2F", c2: "#0C3D1A", init: "TC", img: img("tyler443") },
@@ -54,13 +54,13 @@ const MUSIC_ARTISTS: Item[] = [
   { id: 5, name: "Playboi Carti", sub: "Hip-Hop / Trap", c1: "#7C1C4E", c2: "#3D0C28", init: "PC", img: img("carti558") },
 ];
 
-const MUSIC_ALBUMS: Item[] = [
+export const MUSIC_ALBUMS: Item[] = [
   { id: 1, name: "good kid, m.A.A.d city", sub: "Kendrick Lamar · 2012", c1: "#8B3D1C", c2: "#4A200C", init: "GK", img: img("gkmc2012") },
   { id: 2, name: "Blonde", sub: "Frank Ocean · 2016", c1: "#C4A44A", c2: "#7A6228", init: "BL", img: img("blonde16") },
   { id: 3, name: "IGOR", sub: "Tyler, the Creator · 2019", c1: "#1C7C4A", c2: "#0C3D25", init: "IG", img: img("igor2019") },
 ];
 
-const FILMS: Item[] = [
+export const FILMS: Item[] = [
   { id: 1, name: "Parasite", sub: "Bong Joon-ho · 2019", c1: "#2A4A1C", c2: "#16270C", init: "PA", img: img("parasite19") },
   { id: 2, name: "The Godfather", sub: "Coppola · 1972", c1: "#4A3A1C", c2: "#27200C", init: "GF", img: img("godfather72") },
   { id: 3, name: "Mulholland Drive", sub: "Lynch · 2001", c1: "#1C1C5A", c2: "#0C0C2E", init: "MD", img: img("mulholland01") },
@@ -71,12 +71,27 @@ const FILMS: Item[] = [
   { id: 8, name: "There Will Be Blood", sub: "PTA · 2007", c1: "#5A3A1C", c2: "#2E1E0C", init: "TW", img: img("twbb07") },
 ];
 
-const TV_SHOWS: Item[] = [
+export const TV_SHOWS: Item[] = [
   { id: 1, name: "The Wire", sub: "HBO · 2002–2008", c1: "#2A1C1C", c2: "#150E0E", init: "TW", img: img("wire2002") },
   { id: 2, name: "Succession", sub: "HBO · 2018–2023", c1: "#3A3A1C", c2: "#1E1E0C", init: "SU", img: img("succession18") },
   { id: 3, name: "The Sopranos", sub: "HBO · 1999–2007", c1: "#1C3A3A", c2: "#0C1E1E", init: "SO", img: img("sopranos99") },
   { id: 4, name: "Breaking Bad", sub: "AMC · 2008–2013", c1: "#3A2A1C", c2: "#1E150C", init: "BB", img: img("breakingbad08") },
   { id: 5, name: "Twin Peaks", sub: "ABC/Showtime · 1990", c1: "#2A1C3A", c2: "#150C1E", init: "TP", img: img("twinpeaks90") },
+];
+
+export const ITEM_POOL_BY_CATEGORY: Record<string, Item[]> = {
+  music: [...MUSIC_ARTISTS, ...MUSIC_ALBUMS],
+  film: FILMS,
+  tv: TV_SHOWS,
+  books: [],
+  games: [],
+};
+
+export const ALL_ITEMS: Item[] = [
+  ...MUSIC_ARTISTS,
+  ...MUSIC_ALBUMS,
+  ...FILMS,
+  ...TV_SHOWS,
 ];
 
 export const MOCK_SHELVES: Shelf[] = [

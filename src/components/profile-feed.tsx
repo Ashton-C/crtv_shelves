@@ -1,6 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import Link from "next/link";
-import { FiPlus } from "react-icons/fi";
+import { FiList, FiPlus } from "react-icons/fi";
 import { MOCK_USER } from "~/lib/mock-data";
 import { getUserShelves } from "~/server/actions/shelves";
 import { ShelfCard } from "./shelf-card";
@@ -34,10 +34,18 @@ export async function ProfileFeed() {
         >
           {initials}
         </div>
-        <div>
+        <div className="flex-1">
           <div className="text-[14px] font-bold text-text">{displayName}</div>
           <div className="text-[12px] text-muted">{displayHandle}</div>
         </div>
+        {dbShelves.length > 1 && (
+          <Link
+            href="/dashboard/reorder"
+            className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-surface text-muted transition-colors hover:text-text"
+          >
+            <FiList size={15} />
+          </Link>
+        )}
       </div>
 
       {/* Shelf grid */}

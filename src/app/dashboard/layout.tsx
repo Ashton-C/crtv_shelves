@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import { BottomNav } from "~/components/bottom-nav";
 import { ProfileFeed } from "~/components/profile-feed";
 import { SidebarNav } from "~/components/sidebar-nav";
+import { syncUser } from "~/server/actions/users";
 
 export const metadata: Metadata = {
   title: "crtv_shelves",
@@ -11,9 +12,10 @@ export const metadata: Metadata = {
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  await syncUser();
   return (
     <div className="flex h-screen bg-bg text-text">
       <SidebarNav />

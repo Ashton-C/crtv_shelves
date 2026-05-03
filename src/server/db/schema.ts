@@ -12,6 +12,9 @@ export const users = createTable(
     handle: d.varchar({ length: 32 }).notNull().unique(),
     avatarColor: d.varchar({ length: 7 }).default("#FF5F00").notNull(),
     avatarInitials: d.varchar({ length: 2 }).notNull(),
+    isPublic: d.boolean().default(true).notNull(),
+    shareByLink: d.boolean().default(true).notNull(),
+    showShelfCounts: d.boolean().default(false).notNull(),
     createdAt: d
       .timestamp({ withTimezone: true })
       .$defaultFn(() => new Date())

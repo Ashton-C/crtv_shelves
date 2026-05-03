@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "~/server/db";
 import { shelfItems, shelves } from "~/server/db/schema";
@@ -79,4 +79,81 @@ export async function getShelfBySlug(slug: string) {
   });
 
   return shelf ?? null;
+}
+
+export async function getPublicShelvesByUserId(userId: string) {
+  return db.query.shelves.findMany({
+    where: and(eq(shelves.userId, userId), eq(shelves.isPrivate, false)),
+    orderBy: [asc(shelves.displayOrder), desc(shelves.createdAt)],
+    with: {
+      items: {
+        orderBy: [asc(shelfItems.rank)],
+        limit: 4,
+      },
+    },
+  });
+}
+
+export async function updateShelf(
+  slug: string,
+  input: { name?: string; items?: { name: string; sub: string }[] },
+) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthenticated");
+
+  const shelf = await db.query.shelves.findFirst({
+    where: eq(shelves.slug, slug),
+  });
+  if (shelf?.userId !== userId) throw new Error("Not found");
+
+  if (input.name !== undefined) {
+    await db
+      .update(shelves)
+      .set({ name: input.name.trim(), updatedAt: new Date() })
+      .where(eq(shelves.id, shelf.id));
+  }
+
+  if (input.items !== undefined) {
+    await db.delete(shelfItems).where(eq(shelfItems.shelfId, shelf.id));
+    const filled = input.items.filter((i) => i.name.trim());
+    if (filled.length > 0) {
+      await db.insert(shelfItems).values(
+        filled.map((item, i) => ({
+          shelfId: shelf.id,
+          rank: i + 1,
+          name: item.name.trim(),
+          sub: item.sub.trim() || null,
+        })),
+      );
+    }
+  }
+
+  return { slug: shelf.slug };
+}
+
+export async function reorderShelves(orderedIds: number[]) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthenticated");
+
+  await Promise.all(
+    orderedIds.map((id, i) =>
+      db
+        .update(shelves)
+        .set({ displayOrder: i })
+        .where(and(eq(shelves.id, id), eq(shelves.userId, userId))),
+    ),
+  );
+}
+
+export async function deleteShelf(slug: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthenticated");
+
+  const shelf = await db.query.shelves.findFirst({
+    where: eq(shelves.slug, slug),
+  });
+  if (shelf?.userId !== userId) throw new Error("Not found");
+
+  await db.delete(shelfItems).where(eq(shelfItems.shelfId, shelf.id));
+  await db.delete(shelves).where(eq(shelves.id, shelf.id));
 }
