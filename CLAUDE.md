@@ -14,7 +14,7 @@ CRTV_SHELVES is a T3 Stack web app for curating and sharing ranked media lists (
 
 ```bash
 pnpm install
-cp .env.example .env.local   # fill in DATABASE_URL + Clerk keys
+cp .env.example .env.local   # fill in POSTGRES_URL + Clerk keys
 pnpm dev
 ```
 
@@ -24,7 +24,7 @@ The dev server uses Turbopack (`next dev --turbo`).
 
 | Variable | Description |
 |---|---|
-| `DATABASE_URL` | PostgreSQL connection string (use `POSTGRES_URL` from Vercel) |
+| `POSTGRES_URL` | PostgreSQL connection string (use `POSTGRES_URL` from Vercel) |
 | `NODE_ENV` | `development` / `test` / `production` |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key (add when wiring auth) |
 | `CLERK_SECRET_KEY` | Clerk secret key (add when wiring auth) |
@@ -43,7 +43,7 @@ Env vars are validated at startup via `@t3-oss/env-nextjs` (see `src/env.js`). S
    ```bash
    vercel env pull .env.local
    ```
-4. In `.env.local`, set `DATABASE_URL` to the value of `POSTGRES_URL`
+4. In `.env.local`, set `POSTGRES_URL` to the value of `POSTGRES_URL`
 
 5. Push the schema:
    ```bash

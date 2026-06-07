@@ -52,7 +52,7 @@ Built on the T3 Stack: **Next.js 15 · TypeScript · Drizzle ORM · Vercel Postg
 | Framework | Next.js 15 (App Router) | Turbopack in dev |
 | Language | TypeScript 5 | Strict mode |
 | ORM | Drizzle ORM | Schema in `src/server/db/schema.ts` |
-| Database | Vercel Postgres (Neon) | `DATABASE_URL` env var |
+| Database | Vercel Postgres (Neon) | `POSTGRES_URL` env var |
 | Styling | Tailwind CSS v4 | CSS variable-based design tokens |
 | Animation | Framer Motion | Shelf creation flow |
 | Auth | Clerk | Planned |
@@ -83,7 +83,7 @@ pnpm install
    ```bash
    vercel env pull .env.local
    ```
-4. In `.env.local`, ensure `DATABASE_URL` is set to the `POSTGRES_URL` value from Vercel
+4. In `.env.local`, ensure `POSTGRES_URL` is set to the `POSTGRES_URL` value from Vercel
 
 ### 3. Push the database schema
 
