@@ -14,7 +14,7 @@ CRTV_SHELVES is a T3 Stack web app for curating and sharing ranked media lists (
 
 ```bash
 pnpm install
-cp .env.example .env.local   # fill in DATABASE_URL
+cp .env.example .env.local   # fill in POSTGRES_URL
 pnpm dev
 ```
 
@@ -24,7 +24,7 @@ The dev server uses Turbopack (`next dev --turbo`).
 
 | Variable | Description |
 |---|---|
-| `DATABASE_URL` | PostgreSQL connection string |
+| `POSTGRES_URL` | PostgreSQL connection string |
 | `NODE_ENV` | `development` / `test` / `production` |
 
 Env vars are validated at startup via `@t3-oss/env-nextjs` (see `src/env.js`). The build will fail if required vars are missing. Skip with `SKIP_ENV_VALIDATION=1`.
@@ -41,12 +41,12 @@ Env vars are validated at startup via `@t3-oss/env-nextjs` (see `src/env.js`). T
    ```bash
    vercel env pull .env.local
    ```
-4. Vercel exposes several `POSTGRES_*` vars. Map the right one to `DATABASE_URL` in `.env.local`:
+4. Vercel exposes several `POSTGRES_*` vars. Map the right one to `POSTGRES_URL` in `.env.local`:
    - For the **app** (pooled): use `POSTGRES_URL`
    - For **migrations** (non-pooled): Drizzle Kit needs a direct connection — see `drizzle.config.ts`
 
    ```
-   DATABASE_URL="<value of POSTGRES_URL>"
+   POSTGRES_URL="<value of POSTGRES_URL>"
    ```
 
 5. Push the schema:
