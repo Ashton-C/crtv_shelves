@@ -1,18 +1,29 @@
-import Link from "next/link";
+import { auth, currentUser } from "@clerk/nextjs/server";
+import SettingsClient from "./settings-client";
+import { getUserSettings } from "~/server/actions/settings";
 
-export default function HomePage() {
+export default async function SettingsPage() {
+  const { userId } = await auth();
+  const clerkUser = userId ? await currentUser() : null;
+
+  const settings = userId ? await getUserSettings() : null;
+
+  const displayName =
+    clerkUser?.firstName ?? clerkUser?.username ?? "you";
+  const handle = clerkUser?.username ?? "you";
+  const avatarColor = "#FF5F00";
+  const initials = (
+    (clerkUser?.firstName?.[0] ?? "") + (clerkUser?.lastName?.[0] ?? "")
+  )
+    .toUpperCase()
+    .slice(0, 2) || handle.slice(0, 2).toUpperCase();
+
   return (
-    <main className="from-5 sticky flex h-full w-full flex-col items-center justify-center rounded-xl bg-gradient-to-b to-gray-950 text-white">
-      <div className="container flex flex-col flex-wrap items-center justify-center gap-12 px-4 py-16 text-xl text-black">
-        <h1 className="hero-text text-3xl text-white">Settings page</h1>
-        <Link
-          className="border-all bg-5/80 rounded-xl p-4 font-semibold text-white shadow-xl/30"
-          href="/dashboard"
-          id="back_to_dash_button"
-        >
-          Dashboard
-        </Link>
-      </div>
-    </main>
+    <SettingsClient
+      user={{ displayName, handle, avatarColor, initials }}
+      initialSettings={
+        settings ?? { isPublic: true, shareByLink: true, showShelfCounts: false }
+      }
+    />
   );
 }

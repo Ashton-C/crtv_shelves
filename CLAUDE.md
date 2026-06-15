@@ -4,7 +4,7 @@
 
 CRTV_SHELVES is a T3 Stack web app for curating and sharing ranked media lists ("shelves") with friends. Users create shelves for TV, movies, music, books, etc., customize their appearance, and share them socially.
 
-**Stack:** Next.js 15 (App Router) · TypeScript · Drizzle ORM · PostgreSQL (Vercel Postgres) · Tailwind CSS v4 · Framer Motion
+**Stack:** Next.js 15 (App Router) · TypeScript · Drizzle ORM · PostgreSQL (Vercel Postgres) · Tailwind CSS v4 · Framer Motion · Clerk (auth, planned)
 
 **Package manager:** `pnpm`
 
@@ -14,7 +14,7 @@ CRTV_SHELVES is a T3 Stack web app for curating and sharing ranked media lists (
 
 ```bash
 pnpm install
-cp .env.example .env.local   # fill in POSTGRES_URL
+cp .env.example .env.local   # fill in POSTGRES_URL + Clerk keys
 pnpm dev
 ```
 
@@ -24,10 +24,12 @@ The dev server uses Turbopack (`next dev --turbo`).
 
 | Variable | Description |
 |---|---|
-| `POSTGRES_URL` | PostgreSQL connection string |
+| `POSTGRES_URL` | PostgreSQL connection string (use `POSTGRES_URL` from Vercel) |
 | `NODE_ENV` | `development` / `test` / `production` |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key (add when wiring auth) |
+| `CLERK_SECRET_KEY` | Clerk secret key (add when wiring auth) |
 
-Env vars are validated at startup via `@t3-oss/env-nextjs` (see `src/env.js`). The build will fail if required vars are missing. Skip with `SKIP_ENV_VALIDATION=1`.
+Env vars are validated at startup via `@t3-oss/env-nextjs` (see `src/env.js`). Skip with `SKIP_ENV_VALIDATION=1`.
 
 ---
 
@@ -41,6 +43,9 @@ Env vars are validated at startup via `@t3-oss/env-nextjs` (see `src/env.js`). T
    ```bash
    vercel env pull .env.local
    ```
+<<<<<<< HEAD
+4. In `.env.local`, set `POSTGRES_URL` to the value of `POSTGRES_URL`
+=======
 4. Vercel exposes several `POSTGRES_*` vars. Map the right one to `POSTGRES_URL` in `.env.local`:
    - For the **app** (pooled): use `POSTGRES_URL`
    - For **migrations** (non-pooled): Drizzle Kit needs a direct connection — see `drizzle.config.ts`
@@ -48,6 +53,7 @@ Env vars are validated at startup via `@t3-oss/env-nextjs` (see `src/env.js`). T
    ```
    POSTGRES_URL="<value of POSTGRES_URL>"
    ```
+>>>>>>> origin/main
 
 5. Push the schema:
    ```bash
@@ -63,9 +69,16 @@ Env vars are validated at startup via `@t3-oss/env-nextjs` (see `src/env.js`). T
 | `pnpm db:migrate` | Run pending migration files |
 | `pnpm db:studio` | Open Drizzle Studio (local DB UI) |
 
-Schema lives in `src/server/db/schema.ts`. All tables use the `crtv_shelves_` prefix (multi-project support).
+Schema lives in `src/server/db/schema.ts`. All tables use the `crtv_shelves_` prefix.
 
-DB instance is in `src/server/db/index.ts`.
+### Schema Tables
+
+| Table | Purpose |
+|---|---|
+| `crtv_shelves_user` | User profiles — populated by Clerk on first sign-in |
+| `crtv_shelves_shelf` | Shelves (name, category, type, size, slug, isPrivate) |
+| `crtv_shelves_shelf_item` | Items within a shelf (rank, name, sub, gradient colors, image) |
+| `crtv_shelves_friendship` | Friend relationships (pending / accepted / declined) |
 
 ---
 
@@ -73,27 +86,39 @@ DB instance is in `src/server/db/index.ts`.
 
 ```
 src/
-├── app/                    # Next.js App Router pages
-│   ├── page.tsx            # Landing / splash page
-│   ├── layout.tsx          # Root layout
-│   ├── login/
-│   ├── signup/
-│   ├── about/
+├── app/                        # Next.js App Router pages
+│   ├── page.tsx                # Landing / welcome page
+│   ├── layout.tsx              # Root layout (Inter font, ClerkProvider)
+│   ├── middleware.ts           # Clerk route protection
+│   ├── login/                  # Clerk SignIn
+│   ├── signup/                 # Clerk SignUp
 │   └── dashboard/
-│       ├── layout.tsx      # Dashboard shell (nav + sidebar)
-│       ├── page.tsx        # Dashboard home
-│       ├── create_shelf/   # Shelf creation flow (most complete feature)
-│       ├── display/        # User's shelf list
-│       ├── view_shelf/[slug]/  # Public shelf view
-│       ├── manage_friends/
-│       └── settings/
+│       ├── layout.tsx          # 3-panel shell (sidebar + feed + content)
+│       ├── page.tsx            # Profile grid (mobile) / empty state (desktop)
+│       ├── create_shelf/       # 4-step shelf creation flow
+│       ├── view_shelf/[slug]/  # Shelf detail view
+│       ├── manage_friends/     # Friends list
+│       ├── settings/           # Settings
+│       └── search/             # Search (stub)
+├── components/                 # Shared UI components
+│   ├── badge.tsx               # Category/label badges
+│   ├── bottom-nav.tsx          # Mobile bottom nav (5 tabs + FAB)
+│   ├── item-thumb.tsx          # ItemThumb + CollageTile
+│   ├── profile-feed.tsx        # Profile grid (used in layout + mobile page)
+│   ├── shelf-card.tsx          # Shelf card with 2×2 collage
+│   ├── sidebar-nav.tsx         # Desktop sidebar nav
+│   └── step-dots.tsx           # Step progress dots
+├── lib/
+│   └── mock-data.ts            # Mock data + TypeScript types (Item, Shelf, etc.)
 ├── server/
+│   ├── actions/
+│   │   └── shelves.ts          # Server actions: createShelf, getUserShelves
 │   └── db/
-│       ├── index.ts        # Drizzle client instance
-│       └── schema.ts       # Database schema (expand this)
+│       ├── index.ts            # Drizzle client instance
+│       └── schema.ts           # Database schema + relations
 ├── styles/
-│   └── globals.css         # Tailwind v4 + CSS custom properties
-└── env.js                  # Env var validation schema
+│   └── globals.css             # Tailwind v4 + design tokens
+└── env.js                      # Env var validation schema
 ```
 
 ---
@@ -113,32 +138,46 @@ pnpm db:studio    # Open Drizzle Studio
 
 ## Design System
 
-Custom CSS variables defined in `src/styles/globals.css`:
+Custom CSS variables defined in `src/styles/globals.css` (Tailwind v4):
 
 | Variable | Color | Use |
 |---|---|---|
-| `--color-1` | `#fa0ffa` | Magenta — primary accent |
-| `--color-2` | `#fafa0f` | Yellow — secondary accent |
-| `--color-3` | `#0ffafa` | Cyan |
-| `--color-4` | `#fa850f` | Orange |
-| `--color-5` | `#0ffa85` | Green |
+| `--color-bg` | `#131313` | Main app background |
+| `--color-surface` | `#1c1b1b` | Cards, inputs |
+| `--color-surface-2` | `#242323` | Secondary surfaces, buttons |
+| `--color-border` | `#2e2d2d` | Dividers and borders |
+| `--color-text` | `#f0eeec` | Primary text |
+| `--color-muted` | `#7a7775` | Secondary text, placeholders |
+| `--color-accent` | `#ff5f00` | Sonic Orange — primary CTA, active states, rank #1 |
+| `--color-gold` | `#ffbd00` | Secondary — rank badges, category labels |
+| `--color-violet` | `#6236ff` | Tertiary — reserved |
+| `--color-amber` | `#f59e0b` | Create Format screen only |
 
-Referenced in Tailwind via `bg-1`, `bg-5/80`, etc. (Tailwind v4 CSS variable syntax).
+Referenced in Tailwind via `bg-bg`, `text-accent`, `border-border`, etc.
 
-Fonts: **Montserrat** (body), **Rubik Broken Fax** (display/hero text).
+Font: **Inter** (weights 400–900, variable `--font-inter`). Shelf names always italic.
 
 ---
 
-## Auth — Clerk (Planned)
+## Auth — Clerk
 
-Authentication is not yet wired up. Plan: use Clerk for auth.
+**Status:** Code scaffolded, awaiting Clerk keys.
 
-When adding Clerk:
-1. `pnpm add @clerk/nextjs`
-2. Add `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` to `src/env.js`
-3. Add `ClerkProvider` to `src/app/layout.tsx`
-4. Protect dashboard routes via middleware (`src/middleware.ts`)
-5. Replace the placeholder user button in `src/app/dashboard/layout.tsx`
+### Setup Steps
+1. Create a Clerk application at [clerk.com](https://clerk.com)
+2. Copy keys to `.env.local`:
+   ```
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
+   CLERK_SECRET_KEY=sk_...
+   ```
+3. Add to Vercel environment variables
+4. `pnpm add @clerk/nextjs` (if not already installed)
+
+### Implementation Notes
+- `ClerkProvider` wraps `<body>` in `src/app/layout.tsx`
+- `src/middleware.ts` protects all `/dashboard/*` routes
+- Dashboard layout uses `<UserButton>` from `@clerk/nextjs`
+- Server actions call `auth()` to get `userId`; no Clerk webhook needed for MVP — user ID stored directly in `shelves.userId`
 
 ---
 
@@ -146,13 +185,18 @@ When adding Clerk:
 
 | Feature | Status |
 |---|---|
-| Landing page | Done (static) |
-| Dashboard shell (nav/sidebar) | Done (static) |
-| Shelf creation UI + live preview | Done (no DB persistence yet) |
-| Database schema | Placeholder only — needs real schema |
-| Auth (Clerk) | Not started |
+| Landing / welcome page | Done |
+| Dashboard 3-panel layout (sidebar + feed + detail) | Done |
+| Mobile layout (bottom nav) | Done |
+| Shelf view page | Done (mock data) |
+| 4-step shelf creation UI | Done (no DB persistence yet) |
+| Friends list screen | Done (mock data) |
+| Settings screen | Done (mock data) |
+| Database schema | Defined — run `pnpm db:push` |
+| Auth (Clerk) | Code ready — needs keys |
 | DB persistence for shelves | Not started |
+| Server actions (createShelf, getUserShelves) | Not started |
+| Search page | Stub only |
+| Reorder shelves | Not started |
 | File uploads (Uploadthing) | Not started |
-| Friend system | UI scaffolded, no backend |
-| Public shelf view (`/view_shelf/[slug]`) | Route exists, no data |
-| API routes / server actions | Not started |
+| Item search modal (create flow step 4) | Not started |

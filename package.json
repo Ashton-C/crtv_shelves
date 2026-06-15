@@ -6,6 +6,9 @@
   "scripts": {
     "build": "next build",
     "check": "next lint && tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
@@ -20,11 +23,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.3.0",
+    "@hello-pangea/dnd": "^18.0.1",
     "@neondatabase/serverless": "^1.1.0",
     "@t3-oss/env-nextjs": "^0.12.0",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.41.0",
     "framer-motion": "^12.34.3",
+    "nanoid": "^5.1.11",
     "next": "^15.5.7",
     "postgres": "^3.4.4",
     "react": "^19.0.1",
@@ -39,6 +45,7 @@
     "@types/node": "^20.14.10",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@vitest/ui": "^4.1.8",
     "drizzle-kit": "^0.30.5",
     "eslint": "^9.23.0",
     "eslint-config-next": "^15.2.3",
@@ -48,7 +55,8 @@
     "prettier-plugin-tailwindcss": "^0.6.11",
     "tailwindcss": "^4.0.15",
     "typescript": "^5.8.2",
-    "typescript-eslint": "^8.27.0"
+    "typescript-eslint": "^8.27.0",
+    "vitest": "^4.1.8"
   },
   "ct3aMetadata": {
     "initVersion": "7.40.0"
