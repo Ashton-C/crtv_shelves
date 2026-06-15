@@ -2,6 +2,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { and, asc, desc, eq, or } from "drizzle-orm";
+import { jaccardSimilarity } from "~/lib/compatibility";
 import { db } from "~/server/db";
 import { friendships, shelfItems, shelves, users } from "~/server/db/schema";
 
@@ -46,17 +47,9 @@ async function computeCompatibility(
     }),
   ]);
 
-  const myItems = new Set(
-    mine.flatMap((s) => s.items.map((i) => i.name.toLowerCase())),
-  );
-  const theirItems = new Set(
-    theirs.flatMap((s) => s.items.map((i) => i.name.toLowerCase())),
-  );
-
-  const intersection = [...myItems].filter((i) => theirItems.has(i)).length;
-  const union = new Set([...myItems, ...theirItems]).size;
-  if (union === 0) return 0;
-  return Math.round((intersection / union) * 100);
+  const myItems = new Set(mine.flatMap((s) => s.items.map((i) => i.name.toLowerCase())));
+  const theirItems = new Set(theirs.flatMap((s) => s.items.map((i) => i.name.toLowerCase())));
+  return jaccardSimilarity(myItems, theirItems);
 }
 
 export async function getFriends() {
