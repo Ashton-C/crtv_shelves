@@ -43,7 +43,17 @@ Env vars are validated at startup via `@t3-oss/env-nextjs` (see `src/env.js`). S
    ```bash
    vercel env pull .env.local
    ```
+<<<<<<< HEAD
 4. In `.env.local`, set `POSTGRES_URL` to the value of `POSTGRES_URL`
+=======
+4. Vercel exposes several `POSTGRES_*` vars. Map the right one to `POSTGRES_URL` in `.env.local`:
+   - For the **app** (pooled): use `POSTGRES_URL`
+   - For **migrations** (non-pooled): Drizzle Kit needs a direct connection — see `drizzle.config.ts`
+
+   ```
+   POSTGRES_URL="<value of POSTGRES_URL>"
+   ```
+>>>>>>> origin/main
 
 5. Push the schema:
    ```bash
