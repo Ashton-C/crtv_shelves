@@ -3,13 +3,15 @@
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FiPlus, FiSearch, FiSettings, FiUser, FiUsers } from "react-icons/fi";
+import { FiActivity, FiAward, FiPlus, FiSearch, FiSettings, FiUser, FiUsers } from "react-icons/fi";
 
 const navItems = [
   { icon: FiUser, label: "Profile", href: "/dashboard" },
   { icon: FiUsers, label: "Friends", href: "/dashboard/manage_friends" },
+  { icon: FiActivity, label: "Activity", href: "/dashboard/activity" },
   { icon: FiPlus, label: "Create", href: "/dashboard/create_shelf" },
   { icon: FiSearch, label: "Search", href: "/dashboard/search" },
+  { icon: FiAward, label: "Wrapped", href: "/dashboard/wrapped" },
   { icon: FiSettings, label: "Settings", href: "/dashboard/settings" },
 ];
 

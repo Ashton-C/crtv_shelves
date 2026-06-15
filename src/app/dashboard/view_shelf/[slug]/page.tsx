@@ -1,5 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
+import { getCollaborators } from "~/server/actions/collaborators";
+import { getReactions } from "~/server/actions/reactions";
 import { getShelfBySlug } from "~/server/actions/shelves";
 import ShelfViewClient from "./shelf-view-client";
 
@@ -14,9 +16,16 @@ export default async function ShelfViewPage({
 
   if (!shelf) notFound();
 
+  const itemIds = shelf.items.map((i) => i.id);
+  const [reactions, collaborators] = await Promise.all([
+    getReactions(itemIds),
+    getCollaborators(shelf.id),
+  ]);
+
   return (
     <ShelfViewClient
       isOwner={userId === shelf.userId}
+      currentUserId={userId ?? null}
       shelf={{
         id: shelf.id,
         slug: shelf.slug,
@@ -36,6 +45,18 @@ export default async function ShelfViewPage({
           rank: item.rank,
         })),
       }}
+      reactions={reactions.map((r) => ({
+        shelfItemId: r.shelfItemId,
+        userId: r.userId,
+        type: r.type,
+      }))}
+      collaborators={collaborators.map((u) => ({
+        id: u.id,
+        handle: u.handle,
+        username: u.username,
+        avatarColor: u.avatarColor,
+        avatarInitials: u.avatarInitials,
+      }))}
     />
   );
 }

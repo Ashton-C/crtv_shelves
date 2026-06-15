@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { index, pgTableCreator } from "drizzle-orm/pg-core";
+import { index, pgTableCreator, unique } from "drizzle-orm/pg-core";
 
 export const createTable = pgTableCreator((name) => `crtv_shelves_${name}`);
 
@@ -29,12 +29,13 @@ export const shelves = createTable(
   (d) => ({
     id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
     userId: d.varchar({ length: 128 }).notNull(),
-    name: d.varchar({ length: 32 }).notNull(), // always lowercase in UI
-    category: d.varchar({ length: 16 }).notNull(), // Music | Film | TV | Books | Games
-    type: d.varchar({ length: 32 }).notNull(), // Artists | Albums | Films | etc.
+    name: d.varchar({ length: 32 }).notNull(),
+    category: d.varchar({ length: 16 }).notNull(),
+    type: d.varchar({ length: 32 }).notNull(),
     size: d.varchar({ length: 16 }).notNull(), // podium | focus | archive
     slug: d.varchar({ length: 64 }).notNull().unique(),
     isPrivate: d.boolean().default(false).notNull(),
+    isCollaborative: d.boolean().default(false).notNull(),
     shareCount: d.integer().default(0).notNull(),
     displayOrder: d.integer().default(0).notNull(),
     createdAt: d
@@ -54,11 +55,11 @@ export const shelfItems = createTable(
   (d) => ({
     id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
     shelfId: d.integer().notNull(),
-    rank: d.integer().notNull(), // 1-indexed, #1 = top
+    rank: d.integer().notNull(),
     name: d.varchar({ length: 128 }).notNull(),
-    sub: d.varchar({ length: 128 }), // e.g. "Hip-Hop · Compton"
-    colorFrom: d.varchar({ length: 7 }), // gradient c1 (hex)
-    colorTo: d.varchar({ length: 7 }), // gradient c2 (hex)
+    sub: d.varchar({ length: 128 }),
+    colorFrom: d.varchar({ length: 7 }),
+    colorTo: d.varchar({ length: 7 }),
     initials: d.varchar({ length: 2 }),
     imageUrl: d.varchar({ length: 512 }),
     createdAt: d
@@ -69,14 +70,67 @@ export const shelfItems = createTable(
   (t) => [index("shelf_item_shelf_idx").on(t.shelfId)],
 );
 
-// ── Relations (TypeScript-only, no schema change) ─────────────────────────────
+export const shelfItemReactions = createTable(
+  "shelf_item_reaction",
+  (d) => ({
+    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+    shelfItemId: d.integer().notNull(),
+    userId: d.varchar({ length: 128 }).notNull(),
+    type: d.varchar({ length: 8 }).notNull(), // fire | skull | eyes | check
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .$defaultFn(() => new Date())
+      .notNull(),
+  }),
+  (t) => [
+    index("reaction_item_idx").on(t.shelfItemId),
+    index("reaction_user_item_idx").on(t.userId, t.shelfItemId),
+    unique("reaction_unique_idx").on(t.shelfItemId, t.userId, t.type),
+  ],
+);
+
+export const shelfCollaborators = createTable(
+  "shelf_collaborator",
+  (d) => ({
+    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+    shelfId: d.integer().notNull(),
+    userId: d.varchar({ length: 128 }).notNull(),
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .$defaultFn(() => new Date())
+      .notNull(),
+  }),
+  (t) => [
+    index("collab_shelf_idx").on(t.shelfId),
+    index("collab_user_idx").on(t.userId),
+    unique("collab_unique_idx").on(t.shelfId, t.userId),
+  ],
+);
+
+// ── Relations ─────────────────────────────────────────────────────────────────
 
 export const shelvesRelations = relations(shelves, ({ many }) => ({
   items: many(shelfItems),
+  collaborators: many(shelfCollaborators),
 }));
 
-export const shelfItemsRelations = relations(shelfItems, ({ one }) => ({
+export const shelfItemsRelations = relations(shelfItems, ({ one, many }) => ({
   shelf: one(shelves, { fields: [shelfItems.shelfId], references: [shelves.id] }),
+  reactions: many(shelfItemReactions),
+}));
+
+export const shelfItemReactionsRelations = relations(shelfItemReactions, ({ one }) => ({
+  item: one(shelfItems, {
+    fields: [shelfItemReactions.shelfItemId],
+    references: [shelfItems.id],
+  }),
+}));
+
+export const shelfCollaboratorsRelations = relations(shelfCollaborators, ({ one }) => ({
+  shelf: one(shelves, {
+    fields: [shelfCollaborators.shelfId],
+    references: [shelves.id],
+  }),
 }));
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -87,7 +141,7 @@ export const friendships = createTable(
     id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
     requesterId: d.varchar({ length: 128 }).notNull(),
     addresseeId: d.varchar({ length: 128 }).notNull(),
-    status: d.varchar({ length: 16 }).default("pending").notNull(), // pending | accepted | declined
+    status: d.varchar({ length: 16 }).default("pending").notNull(),
     createdAt: d
       .timestamp({ withTimezone: true })
       .$defaultFn(() => new Date())

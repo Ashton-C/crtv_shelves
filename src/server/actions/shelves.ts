@@ -72,9 +72,8 @@ export async function getShelfBySlug(slug: string) {
   const shelf = await db.query.shelves.findFirst({
     where: eq(shelves.slug, slug),
     with: {
-      items: {
-        orderBy: [asc(shelfItems.rank)],
-      },
+      items: { orderBy: [asc(shelfItems.rank)] },
+      collaborators: true,
     },
   });
 
@@ -96,20 +95,34 @@ export async function getPublicShelvesByUserId(userId: string) {
 
 export async function updateShelf(
   slug: string,
-  input: { name?: string; items?: { name: string; sub: string }[] },
+  input: {
+    name?: string;
+    items?: { name: string; sub: string }[];
+    isCollaborative?: boolean;
+  },
 ) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthenticated");
 
   const shelf = await db.query.shelves.findFirst({
     where: eq(shelves.slug, slug),
+    with: { collaborators: true },
   });
-  if (shelf?.userId !== userId) throw new Error("Not found");
 
-  if (input.name !== undefined) {
+  const isOwner = shelf?.userId === userId;
+  const isCollab = shelf?.collaborators.some((c) => c.userId === userId) ?? false;
+  if (!shelf || (!isOwner && !isCollab)) throw new Error("Not found");
+
+  if (isOwner && (input.name !== undefined || input.isCollaborative !== undefined)) {
     await db
       .update(shelves)
-      .set({ name: input.name.trim(), updatedAt: new Date() })
+      .set({
+        ...(input.name !== undefined ? { name: input.name.trim() } : {}),
+        ...(input.isCollaborative !== undefined
+          ? { isCollaborative: input.isCollaborative }
+          : {}),
+        updatedAt: new Date(),
+      })
       .where(eq(shelves.id, shelf.id));
   }
 
