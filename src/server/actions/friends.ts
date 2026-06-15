@@ -31,6 +31,34 @@ export async function respondToRequest(requestId: number, accept: boolean) {
     .where(and(eq(friendships.id, requestId), eq(friendships.addresseeId, userId)));
 }
 
+async function computeCompatibility(
+  userId: string,
+  friendId: string,
+): Promise<number> {
+  const [mine, theirs] = await Promise.all([
+    db.query.shelves.findMany({
+      where: eq(shelves.userId, userId),
+      with: { items: true },
+    }),
+    db.query.shelves.findMany({
+      where: and(eq(shelves.userId, friendId), eq(shelves.isPrivate, false)),
+      with: { items: true },
+    }),
+  ]);
+
+  const myItems = new Set(
+    mine.flatMap((s) => s.items.map((i) => i.name.toLowerCase())),
+  );
+  const theirItems = new Set(
+    theirs.flatMap((s) => s.items.map((i) => i.name.toLowerCase())),
+  );
+
+  const intersection = [...myItems].filter((i) => theirItems.has(i)).length;
+  const union = new Set([...myItems, ...theirItems]).size;
+  if (union === 0) return 0;
+  return Math.round((intersection / union) * 100);
+}
+
 export async function getFriends() {
   const { userId } = await auth();
   if (!userId) return [];
@@ -49,13 +77,16 @@ export async function getFriends() {
 
   return Promise.all(
     friendIds.map(async (fid) => {
-      const user = await db.query.users.findFirst({ where: eq(users.id, fid) });
-      const topShelf = await db.query.shelves.findFirst({
-        where: and(eq(shelves.userId, fid), eq(shelves.isPrivate, false)),
-        orderBy: [asc(shelves.displayOrder), desc(shelves.createdAt)],
-        with: { items: { orderBy: [asc(shelfItems.rank)], limit: 4 } },
-      });
-      return { user, topShelf };
+      const [user, topShelf, compatibility] = await Promise.all([
+        db.query.users.findFirst({ where: eq(users.id, fid) }),
+        db.query.shelves.findFirst({
+          where: and(eq(shelves.userId, fid), eq(shelves.isPrivate, false)),
+          orderBy: [asc(shelves.displayOrder), desc(shelves.createdAt)],
+          with: { items: { orderBy: [asc(shelfItems.rank)], limit: 4 } },
+        }),
+        computeCompatibility(userId, fid),
+      ]);
+      return { user, topShelf, compatibility };
     }),
   );
 }

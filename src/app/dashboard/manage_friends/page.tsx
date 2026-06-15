@@ -32,7 +32,7 @@ export default async function ManageFriendsPage() {
         </div>
       ) : (
         <div className="flex flex-col divide-y divide-border">
-          {friends.map(({ user, topShelf }) => {
+          {friends.map(({ user, topShelf, compatibility }) => {
             if (!user) return null;
             const preview = topShelf?.items.slice(0, 4) ?? [];
             const empty = Math.max(0, 4 - preview.length);
@@ -67,6 +67,12 @@ export default async function ManageFriendsPage() {
                       </>
                     )}
                   </p>
+                  {compatibility > 0 && (
+                    <p className="mt-0.5 text-[10px] font-bold"
+                      style={{ color: compatibility >= 50 ? "#FF5F00" : "#7A7775" }}>
+                      {compatibility}% taste match
+                    </p>
+                  )}
                 </div>
 
                 {/* Mini collage */}

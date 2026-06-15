@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, ilike } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "~/server/db";
 import { shelfItems, shelves } from "~/server/db/schema";
@@ -143,6 +143,23 @@ export async function reorderShelves(orderedIds: number[]) {
         .where(and(eq(shelves.id, id), eq(shelves.userId, userId))),
     ),
   );
+}
+
+export async function searchShelves(query: string, category?: string) {
+  const nameFilter = query.trim()
+    ? ilike(shelves.name, `%${query.trim()}%`)
+    : undefined;
+  const categoryFilter =
+    category && category !== "all"
+      ? ilike(shelves.category, category)
+      : undefined;
+
+  return db.query.shelves.findMany({
+    where: and(eq(shelves.isPrivate, false), nameFilter, categoryFilter),
+    orderBy: [desc(shelves.shareCount), desc(shelves.createdAt)],
+    limit: 24,
+    with: { items: { orderBy: [asc(shelfItems.rank)], limit: 4 } },
+  });
 }
 
 export async function deleteShelf(slug: string) {
