@@ -199,7 +199,7 @@ describe("updateShelf", () => {
       ...baseShelf,
       userId: "user_owner",
       collaborators: [],
-    });
+    } as never);
 
     await expect(updateShelf(baseShelf.slug, { name: "x" })).rejects.toThrow("Not found");
   });
@@ -221,7 +221,7 @@ describe("updateShelf", () => {
       ...baseShelf,
       isCollaborative: true,
       collaborators: [{ id: 99, shelfId: 1, userId: "user_collab", createdAt: new Date() }],
-    });
+    } as never);
     vi.mocked(db.delete).mockReturnValueOnce(mockDelete() as never);
 
     await expect(
@@ -235,7 +235,7 @@ describe("updateShelf", () => {
     vi.mocked(db.query.shelves.findFirst).mockResolvedValueOnce({
       ...baseShelf,
       collaborators: [{ id: 99, shelfId: 1, userId: "user_collab", createdAt: new Date() }],
-    });
+    } as never);
 
     // Collaborators may only pass name — but the action should silently skip the
     // owner-only update rather than error or call db.update
@@ -290,7 +290,7 @@ describe("searchShelves", () => {
   it("returns results from the database", async () => {
     vi.mocked(db.query.shelves.findMany).mockResolvedValueOnce([
       { ...baseShelf, items: [baseItem] },
-    ]);
+    ] as never);
 
     const results = await searchShelves("albums");
     expect(results).toHaveLength(1);
