@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { notFound, redirect } from "next/navigation";
+import { isUploadEnabled } from "~/lib/uploads";
 import { getCollaborators } from "~/server/actions/collaborators";
 import { getShelfBySlug } from "~/server/actions/shelves";
 import EditShelfClient from "./edit-shelf-client";
@@ -24,6 +25,7 @@ export default async function EditShelfPage({
   return (
     <EditShelfClient
       isOwner={isOwner}
+      uploadEnabled={isUploadEnabled()}
       collaborators={collaborators.map((u) => ({
         id: u.id,
         handle: u.handle,
@@ -43,6 +45,7 @@ export default async function EditShelfPage({
         items: shelf.items.map((item) => ({
           name: item.name,
           sub: item.sub ?? "",
+          imageUrl: item.imageUrl,
         })),
       }}
     />

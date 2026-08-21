@@ -11,7 +11,7 @@ export type CreateShelfInput = {
   category: string;
   type: string;
   size: string;
-  items: { name: string; sub: string }[];
+  items: { name: string; sub: string; imageUrl?: string | null }[];
   isPrivate?: boolean;
 };
 
@@ -44,6 +44,7 @@ export async function createShelf(input: CreateShelfInput) {
         rank: i + 1,
         name: item.name.trim(),
         sub: item.sub.trim() || null,
+        imageUrl: item.imageUrl ?? null,
       })),
     );
   }
@@ -98,7 +99,7 @@ export async function updateShelf(
   slug: string,
   input: {
     name?: string;
-    items?: { name: string; sub: string }[];
+    items?: { name: string; sub: string; imageUrl?: string | null }[];
     isCollaborative?: boolean;
     isPrivate?: boolean;
   },
@@ -146,6 +147,7 @@ export async function updateShelf(
           rank: i + 1,
           name: item.name.trim(),
           sub: item.sub.trim() || null,
+          imageUrl: item.imageUrl ?? null,
         })),
       );
     }

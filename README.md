@@ -10,22 +10,26 @@ Built on the T3 Stack: **Next.js 15 · TypeScript · Drizzle ORM · Vercel Postg
 
 **Live and working end to end.** Clerk auth, the Postgres schema, and shelf persistence are all deployed and verified against the production database: signing up, creating shelves, and viewing them work with no errors.
 
-Milestones 1, 2, and 5 are complete. Milestone 3 is close but has two gaps that block the social loop (see **Next Up**). Milestone 4 is half done.
+Milestones 1, 2, 3 and 5 are complete. Milestone 4 has uploads and auto-fetched cover art shipped; themed customization is the remaining piece.
 
 | | Milestone | State |
 |---|---|---|
 | 1 | Foundation | ✅ Complete |
 | 2 | Auth & Persistence | ✅ Complete |
-| 3 | Social | 🟡 2 gaps |
-| 4 | Media & Polish | 🟡 Half |
+| 3 | Social | ✅ Complete |
+| 4 | Media & Polish | 🟡 Uploads + auto-art done; themes pending |
 | 5 | Revamp (Design) | ✅ Complete |
 
 ### Next Up
 
-Two verified gaps, both in Milestone 3. They matter more than their size suggests, because together they mean the social half of the app can't be exercised by a real user:
-
-1. **Friend requests can be sent but never accepted.** `respondToRequest()` and `getPendingRequests()` exist in `src/server/actions/friends.ts`, but no UI calls them. Until a pending-requests list with accept/decline is built, friendships can only be completed by editing the database directly — which also makes the activity feed and taste-match scores unreachable in practice.
-2. **Per-shelf privacy is read-only.** `isPrivate` is hardcoded to `false` in `createShelf()` and has no write path anywhere, so every shelf is permanently public. The column is honored by five different read queries — only the toggle is missing.
+- **Verify artwork on Vercel.** The artwork providers (iTunes, Wikipedia, Open
+  Library) are blocked by the dev container's egress proxy, so they have never
+  run for real — only against stubbed `fetch` in tests. The first true test is a
+  deployed shelf. See the Artwork section in [CLAUDE.md](./CLAUDE.md).
+- **Rich shelf customization** (themes, fonts) — the last Milestone 4 item.
+- Consider turning off `typescript.ignoreBuildErrors` / `eslint.ignoreDuringBuilds`
+  in `next.config.js` so the deploy actually gates on type and lint errors.
+  `pnpm check` is clean, so it would be safe to flip.
 
 ---
 
@@ -49,17 +53,18 @@ Two verified gaps, both in Milestone 3. They matter more than their size suggest
 - [x] Public shelf view (`/dashboard/view_shelf/[slug]`) loads real data
 - [x] User record synced from Clerk on first sign-in
 
-### Milestone 3 — Social 🟡
+### Milestone 3 — Social ✅
 - [x] Send friend requests by handle
-- [ ] **Accept / decline friend requests** — server actions exist, no UI
+- [x] Accept / decline friend requests, with pending + sent lists
 - [x] View a friend's shelves
 - [x] Taste compatibility score (Jaccard similarity over item names)
-- [ ] **Per-shelf privacy toggle** — column respected on read, never written
+- [x] Per-shelf privacy toggle, enforced on the view page and OG image route
 - [x] Account-level privacy settings (public profile, share by link, shelf counts)
 - [x] User profiles (`/u/[handle]`, works signed out)
 
 ### Milestone 4 — Media & Polish 🟡
-- [ ] Uploadthing integration for shelf cover images
+- [x] UploadThing integration for per-item images (optional — hidden without a token)
+- [x] Auto-fetched cover art from iTunes / Wikipedia / Open Library
 - [ ] Rich shelf customization (themes, fonts)
 - [x] Search / discover public shelves
 - [x] Mobile-responsive polish pass (bottom nav, responsive layouts)
@@ -97,7 +102,9 @@ Built during the Phase 2–4 push, none of it originally scoped:
 | Animation | Framer Motion | Shelf creation flow, modals |
 | Drag & drop | @hello-pangea/dnd | Shelf reordering |
 | Auth | Clerk | Live |
-| Testing | Vitest | 46 tests |
+| Uploads | UploadThing v7 | Optional — `UPLOADTHING_TOKEN` |
+| Cover art | iTunes · Wikipedia · Open Library | Keyless, resolved server-side |
+| Testing | Vitest | 80 tests |
 | File uploads | Uploadthing | Planned |
 | Package manager | pnpm | Required |
 
@@ -110,6 +117,7 @@ Built during the Phase 2–4 push, none of it originally scoped:
 - Node.js 20+
 - pnpm (`npm install -g pnpm`)
 - Vercel account (for Postgres)
+- UploadThing account (optional — only for image uploads)
 - Clerk application (for auth keys)
 
 ### 1. Install dependencies

@@ -1,4 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
+import { ArtworkBackfill } from "~/components/artwork-backfill";
 import { notFound } from "next/navigation";
 import { getCollaborators } from "~/server/actions/collaborators";
 import { getReactions } from "~/server/actions/reactions";
@@ -30,8 +31,14 @@ export default async function ShelfViewPage({
     getCollaborators(shelf.id),
   ]);
 
+  // Only an editor can trigger a backfill, and only when something is missing.
+  const needsArtwork =
+    (isOwner || isCollaborator) && shelf.items.some((i) => !i.imageUrl);
+
   return (
-    <ShelfViewClient
+    <>
+      {needsArtwork && <ArtworkBackfill slug={shelf.slug} />}
+      <ShelfViewClient
       isOwner={isOwner}
       currentUserId={userId ?? null}
       shelf={{
@@ -65,6 +72,7 @@ export default async function ShelfViewPage({
         avatarColor: u.avatarColor,
         avatarInitials: u.avatarInitials,
       }))}
-    />
+      />
+    </>
   );
 }

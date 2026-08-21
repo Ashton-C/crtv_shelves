@@ -28,6 +28,7 @@ The dev server uses Turbopack (`next dev --turbo`).
 | `NODE_ENV` | `development` / `test` / `production` |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key (add when wiring auth) |
 | `CLERK_SECRET_KEY` | Clerk secret key (add when wiring auth) |
+| `UPLOADTHING_TOKEN` | Optional. Image uploads. Without it, upload controls are hidden and the app degrades to auto-fetched artwork only. |
 
 Env vars are validated at startup via `@t3-oss/env-nextjs` (see `src/env.js`). Skip with `SKIP_ENV_VALIDATION=1`.
 
@@ -210,42 +211,99 @@ milestone-level roadmap.
 | Search / discover | Done |
 | Settings screen | Done — persists to DB |
 | Send friend request | Done |
-| **Accept / decline friend request** | **Server actions only — no UI wired up** |
+| Accept / decline friend request | Done |
 | Taste compatibility score | Done |
 | Activity feed | Done |
 | Wrapped stats | Done |
 | Item reactions | Done |
 | Collaborative shelves | Done |
-| **Per-shelf privacy toggle** | **Not started — `isPrivate` is hardcoded `false` on create** |
+| Per-shelf privacy toggle | Done — enforced on view + OG routes |
 | Rich shelf customization (themes, fonts) | Not started |
-| File uploads (Uploadthing) | Not started |
+| File uploads (UploadThing) | Done — optional, per shelf item |
+| Auto-fetched cover art | Done — see Artwork below |
 
 ### Known Gaps
 
-Two items above are load-bearing and worth understanding before picking up new work:
+- **Artwork cannot be verified locally.** See Artwork below.
+- Rich shelf customization (themes, fonts) is not started.
+- `getFriends` issues a few queries per friend. Fine at current scale; worth a
+  join if a user ever has many friends.
 
-1. **Friend requests cannot be accepted in-app.** `respondToRequest()` and
-   `getPendingRequests()` exist in `src/server/actions/friends.ts`, but nothing calls
-   them. Friendships can only be completed by editing the DB directly, which in turn
-   makes the activity feed and taste-match scores unreachable for a normal user.
-2. **Every shelf is permanently public.** `createShelf()` hardcodes `isPrivate: false`
-   and `updateShelf()` does not accept the field, so there is no write path. Five read
-   queries already honor the column — only the toggle is missing.
+---
+
+## Artwork — auto-fetched cover images
+
+`src/server/services/artwork.ts` resolves a cover image per shelf item from
+keyless public APIs. Chain by category and type:
+
+| Shelf type | Provider order |
+|---|---|
+| Artists / Directors / Authors / Characters | Wikipedia → (music only) iTunes album |
+| Albums / Songs | iTunes → Wikipedia |
+| Films | iTunes (`movie`) → Wikipedia |
+| Shows | iTunes (`tvSeason`) → Wikipedia |
+| Books | Open Library → iTunes (`ebook`) → Wikipedia |
+| Games / Franchises | Wikipedia |
+
+Non-obvious constraints, each of which is load-bearing and has a test:
+
+- **iTunes returns no artwork at all for `entity=musicArtist`.** Artist results
+  carry only name/id fields. That is why person-type shelves go to Wikipedia
+  first — and it matters, since "top N artists" is a common shelf.
+- **Wikipedia's `pilicense` defaults to `free`.** Box art, film posters and
+  album covers are non-free uploads, so the default returns nothing for exactly
+  this app's content. `pilicense=any` is required.
+- **Wikipedia page order is not relevance order.** Rank lives in the per-page
+  `index` field; results are sorted by it. The request asks for 5 results and
+  takes the first that actually has a thumbnail, because the top hit is often a
+  list or disambiguation page with no image.
+- **iTunes signals rate limiting with HTTP 403 plus a body that parses as an
+  empty result set.** Any non-2xx is treated as failure so it falls through
+  rather than being read as a genuine miss.
+- **Open Library uses `cover_i: -1` for "no cover"** on some records, and
+  without `?default=false` a missing cover returns 200 with a blank image.
+- Games use Wikipedia rather than Steam: Steam has no console exclusives
+  (Zelda, Mario) and its search endpoints are undocumented with no terms grant.
+
+Lookups run **in series** — Wikimedia asks for serial requests and iTunes allows
+roughly 20 calls/minute per IP.
+
+Resolution happens **after** a shelf is written, not during: `ArtworkBackfill`
+renders on the shelf view for an owner/collaborator when any item lacks art,
+calls `backfillShelfArtwork`, then refreshes. Creation and saving stay fast, and
+art fills in progressively. Only rows where `imageUrl IS NULL` are touched, so an
+uploaded image is never overwritten.
+
+> **These hosts are blocked by the dev container's egress proxy**, so the
+> providers cannot be exercised locally — `curl` to itunes/wikipedia/openlibrary
+> returns `CONNECT tunnel failed, 403`. The contracts were researched, not run.
+> Coverage comes from `src/server/services/__tests__/artwork.test.ts`, which
+> stubs `fetch`. **First real verification happens on Vercel.**
+
+A note on licensing: `pilicense=any` returns images that are fair-use *on
+Wikipedia*. Hotlinking non-free cover art is normal for hobby projects but is not
+a license grant — worth a look before any public launch.
 
 ---
 
 ## Testing
 
 ```bash
-pnpm test        # vitest run — 46 tests
+pnpm test        # vitest run — 80 tests
 pnpm test:watch  # watch mode
 ```
 
 Tests live in `src/**/__tests__/`. Server-action tests mock `@clerk/nextjs/server`
 and `~/server/db`; `src/test/setup.ts` mocks `nanoid` for deterministic slugs.
 
-Note that `tsconfig.json` includes `**/*.ts`, so **test files are typechecked during
-`next build`** — a type error in a test will fail the Vercel deploy.
+`tsconfig.json` includes `**/*.ts`, so test files are covered by `pnpm typecheck`.
+They are **not** a deploy gate, however: `next.config.js` currently sets
+`typescript.ignoreBuildErrors: true` and `eslint.ignoreDuringBuilds: true`, so
+`next build` ships regardless of type or lint errors. Run `pnpm check` yourself
+before pushing — a green Vercel deploy does not mean the types are sound.
+
+(Turning those two flags off would make the deploy catch this automatically.
+`pnpm typecheck` is clean as of this writing, so it would be safe to do.)
 
 [QA_RUNTHROUGH.md](./QA_RUNTHROUGH.md) is the manual pass: 16 sections, sign-off
 checklist at the end.

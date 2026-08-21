@@ -3,9 +3,10 @@
 import { AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { FiArrowLeft, FiMinus, FiSearch, FiTrash2 } from "react-icons/fi";
+import { FiArrowLeft, FiMinus, FiSearch, FiTrash2, FiX } from "react-icons/fi";
 import { ItemSearchModal } from "~/components/item-search-modal";
 import { ToggleRow } from "~/components/toggle-row";
+import { ImageUploadButton } from "~/components/image-upload-button";
 import { inviteCollaborator, removeCollaborator } from "~/server/actions/collaborators";
 import { deleteShelf, updateShelf } from "~/server/actions/shelves";
 
@@ -29,13 +30,19 @@ type Props = {
     size: ShelfSize;
     isCollaborative: boolean;
     isPrivate: boolean;
-    items: { name: string; sub: string }[];
+    items: { name: string; sub: string; imageUrl: string | null }[];
   };
   isOwner: boolean;
+  uploadEnabled: boolean;
   collaborators: Collaborator[];
 };
 
-export default function EditShelfClient({ shelf, isOwner, collaborators }: Props) {
+export default function EditShelfClient({
+  shelf,
+  isOwner,
+  uploadEnabled,
+  collaborators,
+}: Props) {
   const router = useRouter();
   const [name, setName] = useState(shelf.name);
   const [items, setItems] = useState(shelf.items);
@@ -48,6 +55,12 @@ export default function EditShelfClient({ shelf, isOwner, collaborators }: Props
   const [inviteHandle, setInviteHandle] = useState("");
   const [inviting, setInviting] = useState(false);
   const [inviteMessage, setInviteMessage] = useState("");
+
+  const setImage = (i: number, url: string | null) => {
+    setItems((prev) =>
+      prev.map((item, idx) => (idx === i ? { ...item, imageUrl: url } : item)),
+    );
+  };
 
   const update = (i: number, field: "name" | "sub", value: string) => {
     setItems((prev) =>
@@ -198,6 +211,30 @@ export default function EditShelfClient({ shelf, isOwner, collaborators }: Props
                       className="w-full bg-transparent text-[11px] font-medium text-muted placeholder-muted/40 outline-none"
                     />
                   </div>
+                  {item.imageUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={item.imageUrl}
+                      alt=""
+                      className="h-8 w-8 flex-shrink-0 rounded-[8px] object-cover"
+                    />
+                  )}
+                  {uploadEnabled && (
+                    <ImageUploadButton
+                      label={item.imageUrl ? "replace image" : "upload image"}
+                      onUploaded={(url) => setImage(i, url)}
+                    />
+                  )}
+                  {item.imageUrl && (
+                    <button
+                      onClick={() => setImage(i, null)}
+                      title="remove image (art is re-fetched on next view)"
+                      aria-label="remove image"
+                      className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] bg-surface-2 text-muted transition-colors hover:text-text"
+                    >
+                      <FiX size={14} />
+                    </button>
+                  )}
                   <button
                     onClick={() => setModalSlot(i)}
                     className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] bg-surface-2 text-muted transition-colors hover:text-accent"
@@ -339,7 +376,11 @@ export default function EditShelfClient({ shelf, isOwner, collaborators }: Props
             slotIndex={modalSlot}
             onAdd={(picked) => {
               setItems((prev) =>
-                prev.map((item, idx) => (idx === modalSlot ? picked : item)),
+                prev.map((item, idx) =>
+                  idx === modalSlot
+                    ? { ...picked, imageUrl: null }
+                    : item,
+                ),
               );
             }}
             onClose={() => setModalSlot(null)}
