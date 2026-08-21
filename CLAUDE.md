@@ -28,6 +28,7 @@ The dev server uses Turbopack (`next dev --turbo`).
 | `NODE_ENV` | `development` / `test` / `production` |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key (add when wiring auth) |
 | `CLERK_SECRET_KEY` | Clerk secret key (add when wiring auth) |
+| `UPLOADTHING_TOKEN` | Optional. Image uploads. Without it, upload controls are hidden and the app degrades to auto-fetched artwork only. |
 
 Env vars are validated at startup via `@t3-oss/env-nextjs` (see `src/env.js`). Skip with `SKIP_ENV_VALIDATION=1`.
 
@@ -43,17 +44,16 @@ Env vars are validated at startup via `@t3-oss/env-nextjs` (see `src/env.js`). S
    ```bash
    vercel env pull .env.local
    ```
-<<<<<<< HEAD
-4. In `.env.local`, set `POSTGRES_URL` to the value of `POSTGRES_URL`
-=======
-4. Vercel exposes several `POSTGRES_*` vars. Map the right one to `POSTGRES_URL` in `.env.local`:
-   - For the **app** (pooled): use `POSTGRES_URL`
-   - For **migrations** (non-pooled): Drizzle Kit needs a direct connection — see `drizzle.config.ts`
+4. Vercel exposes several `POSTGRES_*` vars. Confirm `.env.local` ends up with a
+   `POSTGRES_URL` line — that is the only one this project reads, from both the app
+   (`src/server/db/index.ts`) and the Drizzle CLI (`drizzle.config.ts`). If Vercel only
+   populated `POSTGRES_PRISMA_URL` / `POSTGRES_URL_NON_POOLING`, copy one into
+   `POSTGRES_URL` yourself.
 
-   ```
-   POSTGRES_URL="<value of POSTGRES_URL>"
-   ```
->>>>>>> origin/main
+   > `drizzle-kit` does not auto-load `.env.local` — only `.env`. `drizzle.config.ts`
+   > loads it explicitly, so a plain `vercel env pull .env.local` is enough. Note that
+   > a `dotenv` call cannot go above the `~/env` import: ES imports are hoisted, so
+   > validation would run first.
 
 5. Push the schema:
    ```bash
@@ -75,10 +75,14 @@ Schema lives in `src/server/db/schema.ts`. All tables use the `crtv_shelves_` pr
 
 | Table | Purpose |
 |---|---|
-| `crtv_shelves_user` | User profiles — populated by Clerk on first sign-in |
-| `crtv_shelves_shelf` | Shelves (name, category, type, size, slug, isPrivate) |
+| `crtv_shelves_user` | User profiles — populated by Clerk on first sign-in. Also holds the account privacy flags (`isPublic`, `shareByLink`, `showShelfCounts`) |
+| `crtv_shelves_shelf` | Shelves (name, category, type, size, slug, `isPrivate`, `isCollaborative`, shareCount, displayOrder) |
 | `crtv_shelves_shelf_item` | Items within a shelf (rank, name, sub, gradient colors, image) |
+| `crtv_shelves_shelf_item_reaction` | Per-item reactions. `type` is one of `fire` / `skull` / `eyes` / `check`. Unique on (shelfItemId, userId, type) |
+| `crtv_shelves_shelf_collaborator` | Users granted edit access to a shelf. Unique on (shelfId, userId) |
 | `crtv_shelves_friendship` | Friend relationships (pending / accepted / declined) |
+
+All six tables are live in production as of 2026-08-21.
 
 ---
 
@@ -161,17 +165,20 @@ Font: **Inter** (weights 400–900, variable `--font-inter`). Shelf names always
 
 ## Auth — Clerk
 
-**Status:** Code scaffolded, awaiting Clerk keys.
+**Status:** Live. Sign-up, sign-in, and route protection are verified in production.
 
-### Setup Steps
+### Setup Steps (for a fresh environment)
 1. Create a Clerk application at [clerk.com](https://clerk.com)
 2. Copy keys to `.env.local`:
    ```
    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
    CLERK_SECRET_KEY=sk_...
    ```
-3. Add to Vercel environment variables
-4. `pnpm add @clerk/nextjs` (if not already installed)
+3. Add both to Vercel environment variables
+
+> Both keys are `.optional()` in `src/env.js`, so a build **succeeds without them** and
+> then fails at runtime on every `/dashboard/*` route. If auth breaks with a green
+> deploy, check these first.
 
 ### Implementation Notes
 - `ClerkProvider` wraps `<body>` in `src/app/layout.tsx`
@@ -183,20 +190,126 @@ Font: **Inter** (weights 400–900, variable `--font-inter`). Shelf names always
 
 ## Implementation Status
 
+Last verified 2026-08-21 against production. See [README.md](./README.md) for the
+milestone-level roadmap.
+
 | Feature | Status |
 |---|---|
 | Landing / welcome page | Done |
 | Dashboard 3-panel layout (sidebar + feed + detail) | Done |
 | Mobile layout (bottom nav) | Done |
-| Shelf view page | Done (mock data) |
-| 4-step shelf creation UI | Done (no DB persistence yet) |
-| Friends list screen | Done (mock data) |
-| Settings screen | Done (mock data) |
-| Database schema | Defined — run `pnpm db:push` |
-| Auth (Clerk) | Code ready — needs keys |
-| DB persistence for shelves | Not started |
-| Server actions (createShelf, getUserShelves) | Not started |
-| Search page | Stub only |
-| Reorder shelves | Not started |
-| File uploads (Uploadthing) | Not started |
-| Item search modal (create flow step 4) | Not started |
+| Auth (Clerk) | Done — live |
+| Database schema | Done — pushed to production |
+| DB persistence for shelves | Done |
+| 4-step shelf creation UI | Done — persists via `createShelf` |
+| Item search modal (create + edit flows) | Done |
+| Shelf view page | Done — real data |
+| Shelf editing / deletion | Done |
+| Reorder shelves | Done — `@hello-pangea/dnd` |
+| Public profile (`/u/[handle]`) | Done — works signed out |
+| OG share cards | Done — `next/og` |
+| Search / discover | Done |
+| Settings screen | Done — persists to DB |
+| Send friend request | Done |
+| Accept / decline friend request | Done |
+| Taste compatibility score | Done |
+| Activity feed | Done |
+| Wrapped stats | Done |
+| Item reactions | Done |
+| Collaborative shelves | Done |
+| Per-shelf privacy toggle | Done — enforced on view + OG routes |
+| Rich shelf customization (themes, fonts) | Not started |
+| File uploads (UploadThing) | Done — optional, per shelf item |
+| Auto-fetched cover art | Done — see Artwork below |
+
+### Known Gaps
+
+- **Artwork cannot be verified locally.** See Artwork below.
+- Rich shelf customization (themes, fonts) is not started.
+- `getFriends` issues a few queries per friend. Fine at current scale; worth a
+  join if a user ever has many friends.
+
+---
+
+## Artwork — auto-fetched cover images
+
+`src/server/services/artwork.ts` resolves a cover image per shelf item from
+keyless public APIs. Chain by category and type:
+
+| Shelf type | Provider order |
+|---|---|
+| Artists / Directors / Authors / Characters | Wikipedia → (music only) iTunes album |
+| Albums / Songs | iTunes → Wikipedia |
+| Films | iTunes (`movie`) → Wikipedia |
+| Shows | iTunes (`tvSeason`) → Wikipedia |
+| Books | Open Library → iTunes (`ebook`) → Wikipedia |
+| Games / Franchises | Wikipedia |
+
+Non-obvious constraints, each of which is load-bearing and has a test:
+
+- **iTunes returns no artwork at all for `entity=musicArtist`.** Artist results
+  carry only name/id fields. That is why person-type shelves go to Wikipedia
+  first — and it matters, since "top N artists" is a common shelf.
+- **Wikipedia's `pilicense` defaults to `free`.** Box art, film posters and
+  album covers are non-free uploads, so the default returns nothing for exactly
+  this app's content. `pilicense=any` is required.
+- **Wikipedia page order is not relevance order.** Rank lives in the per-page
+  `index` field; results are sorted by it. The request asks for 5 results and
+  takes the first that actually has a thumbnail, because the top hit is often a
+  list or disambiguation page with no image.
+- **iTunes signals rate limiting with HTTP 403 plus a body that parses as an
+  empty result set.** Any non-2xx is treated as failure so it falls through
+  rather than being read as a genuine miss.
+- **Open Library uses `cover_i: -1` for "no cover"** on some records, and
+  without `?default=false` a missing cover returns 200 with a blank image.
+- **iTunes size tokens vary** — `100x100bb.jpg`, `100x100.jpg`,
+  `100x100bb-60.jpg`, `.png`. Upsizing only the `bb.jpg` form silently leaves a
+  blurry 100px image, so the suffix and extension are preserved.
+- **`imageUrl` is `varchar(512)` and Postgres errors on overflow** rather than
+  truncating, which would abort a whole backfill. Over-long URLs are treated as
+  a miss.
+- Games use Wikipedia rather than Steam: Steam has no console exclusives
+  (Zelda, Mario) and its search endpoints are undocumented with no terms grant.
+
+Lookups run **in series** — Wikimedia asks for serial requests and iTunes allows
+roughly 20 calls/minute per IP.
+
+Resolution happens **after** a shelf is written, not during: `ArtworkBackfill`
+renders on the shelf view for an owner/collaborator when any item lacks art,
+calls `backfillShelfArtwork`, then refreshes. Creation and saving stay fast, and
+art fills in progressively. Only rows where `imageUrl IS NULL` are touched, so an
+uploaded image is never overwritten.
+
+> **These hosts are blocked by the dev container's egress proxy**, so the
+> providers cannot be exercised locally — `curl` to itunes/wikipedia/openlibrary
+> returns `CONNECT tunnel failed, 403`. The contracts were researched, not run.
+> Coverage comes from `src/server/services/__tests__/artwork.test.ts`, which
+> stubs `fetch`. **First real verification happens on Vercel.**
+
+A note on licensing: `pilicense=any` returns images that are fair-use *on
+Wikipedia*. Hotlinking non-free cover art is normal for hobby projects but is not
+a license grant — worth a look before any public launch.
+
+---
+
+## Testing
+
+```bash
+pnpm test        # vitest run — 84 tests
+pnpm test:watch  # watch mode
+```
+
+Tests live in `src/**/__tests__/`. Server-action tests mock `@clerk/nextjs/server`
+and `~/server/db`; `src/test/setup.ts` mocks `nanoid` for deterministic slugs.
+
+`tsconfig.json` includes `**/*.ts`, so test files are covered by `pnpm typecheck`.
+They are **not** a deploy gate, however: `next.config.js` currently sets
+`typescript.ignoreBuildErrors: true` and `eslint.ignoreDuringBuilds: true`, so
+`next build` ships regardless of type or lint errors. Run `pnpm check` yourself
+before pushing — a green Vercel deploy does not mean the types are sound.
+
+(Turning those two flags off would make the deploy catch this automatically.
+`pnpm typecheck` is clean as of this writing, so it would be safe to do.)
+
+[QA_RUNTHROUGH.md](./QA_RUNTHROUGH.md) is the manual pass: 16 sections, sign-off
+checklist at the end.

@@ -151,5 +151,9 @@ export const friendships = createTable(
   (t) => [
     index("friendship_requester_idx").on(t.requesterId),
     index("friendship_addressee_idx").on(t.addresseeId),
+    // Stops a duplicate request row in the same direction. The reverse
+    // direction is handled in sendFriendRequest, which accepts the existing
+    // request instead of inserting a mirrored one.
+    unique("friendship_pair_idx").on(t.requesterId, t.addresseeId),
   ],
 );

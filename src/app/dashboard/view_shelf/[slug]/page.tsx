@@ -1,4 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
+import { ArtworkBackfill } from "~/components/artwork-backfill";
 import { notFound } from "next/navigation";
 import { getCollaborators } from "~/server/actions/collaborators";
 import { getReactions } from "~/server/actions/reactions";
@@ -16,15 +17,29 @@ export default async function ShelfViewPage({
 
   if (!shelf) notFound();
 
+  const isOwner = userId === shelf.userId;
+  const isCollaborator = shelf.collaborators.some((c) => c.userId === userId);
+
+  // A private shelf is only reachable by its owner or a collaborator. Without
+  // this, `isPrivate` would be honoured by the listing queries but bypassed by
+  // anyone who had the direct URL.
+  if (shelf.isPrivate && !isOwner && !isCollaborator) notFound();
+
   const itemIds = shelf.items.map((i) => i.id);
   const [reactions, collaborators] = await Promise.all([
     getReactions(itemIds),
     getCollaborators(shelf.id),
   ]);
 
+  // Only an editor can trigger a backfill, and only when something is missing.
+  const needsArtwork =
+    (isOwner || isCollaborator) && shelf.items.some((i) => !i.imageUrl);
+
   return (
-    <ShelfViewClient
-      isOwner={userId === shelf.userId}
+    <>
+      {needsArtwork && <ArtworkBackfill slug={shelf.slug} />}
+      <ShelfViewClient
+      isOwner={isOwner}
       currentUserId={userId ?? null}
       shelf={{
         id: shelf.id,
@@ -57,6 +72,7 @@ export default async function ShelfViewPage({
         avatarColor: u.avatarColor,
         avatarInitials: u.avatarInitials,
       }))}
-    />
+      />
+    </>
   );
 }

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { FiArrowLeft, FiSearch } from "react-icons/fi";
 import { ItemSearchModal } from "~/components/item-search-modal";
 import { StepDots } from "~/components/step-dots";
+import { ToggleRow } from "~/components/toggle-row";
 import {
   CATEGORIES,
   NAME_SUGGESTIONS,
@@ -239,10 +240,14 @@ function Step4({
   category,
   items,
   setItems,
+  isPrivate,
+  setIsPrivate,
 }: {
   category: string;
   items: { name: string; sub: string }[];
   setItems: (items: { name: string; sub: string }[]) => void;
+  isPrivate: boolean;
+  setIsPrivate: (next: boolean) => void;
 }) {
   const [modalSlot, setModalSlot] = useState<number | null>(null);
 
@@ -305,6 +310,22 @@ function Step4({
             </div>
           ))}
         </div>
+
+        <div className="pt-1">
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-muted">
+            visibility
+          </p>
+          <ToggleRow
+            label="private shelf"
+            description={
+              isPrivate
+                ? "only you can see this — hidden from search, profiles and friends"
+                : "anyone with the link can see this shelf"
+            }
+            checked={isPrivate}
+            onChange={setIsPrivate}
+          />
+        </div>
       </div>
 
       <AnimatePresence>
@@ -330,6 +351,7 @@ export default function CreateShelfPage() {
   const [type, setType] = useState("");
   const [name, setName] = useState("");
   const [size, setSize] = useState<ShelfSize>("focus");
+  const [isPrivate, setIsPrivate] = useState(false);
   const [items, setItems] = useState<{ name: string; sub: string }[]>(
     Array(5).fill({ name: "", sub: "" }),
   );
@@ -354,7 +376,14 @@ export default function CreateShelfPage() {
   const handleCreate = async () => {
     setSaving(true);
     try {
-      const result = await createShelf({ name, category, type, size, items });
+      const result = await createShelf({
+        name,
+        category,
+        type,
+        size,
+        items,
+        isPrivate,
+      });
       router.push(`/dashboard/view_shelf/${result.slug}`);
     } catch {
       setSaving(false);
@@ -409,6 +438,8 @@ export default function CreateShelfPage() {
                 category={category}
                 items={items}
                 setItems={setItems}
+                isPrivate={isPrivate}
+                setIsPrivate={setIsPrivate}
               />
             )}
           </motion.div>

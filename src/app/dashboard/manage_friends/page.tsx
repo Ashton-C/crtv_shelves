@@ -1,26 +1,40 @@
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { CollageTile } from "~/components/item-thumb";
-import { getFriends } from "~/server/actions/friends";
+import {
+  getFriends,
+  getPendingRequests,
+  getSentRequests,
+} from "~/server/actions/friends";
 import AddFriendInput from "./add-friend-input";
+import PendingRequests from "./pending-requests";
 
 export default async function ManageFriendsPage() {
   const { userId } = await auth();
-  const friends = userId ? await getFriends() : [];
+
+  const [friends, incoming, outgoing] = userId
+    ? await Promise.all([getFriends(), getPendingRequests(), getSentRequests()])
+    : [[], [], []];
 
   return (
     <div className="flex min-h-full flex-col">
       {/* Header */}
-      <div className="border-b border-border px-4 py-3">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <h1 className="text-[15px] font-bold tracking-tight text-text">
           friends
         </h1>
+        {friends.length > 0 && (
+          <span className="text-[12px] text-muted">{friends.length}</span>
+        )}
       </div>
 
       {/* Search / add friend */}
       <div className="px-4 py-3">
         <AddFriendInput />
       </div>
+
+      {/* Incoming + outgoing requests */}
+      <PendingRequests incoming={incoming} outgoing={outgoing} />
 
       {/* Friend list */}
       {friends.length === 0 ? (
@@ -40,7 +54,11 @@ export default async function ManageFriendsPage() {
             return (
               <Link
                 key={user.id}
-                href={topShelf ? `/dashboard/view_shelf/${topShelf.slug}` : `/u/${user.handle}`}
+                href={
+                  topShelf
+                    ? `/dashboard/view_shelf/${topShelf.slug}`
+                    : `/u/${user.handle}`
+                }
                 className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface"
               >
                 {/* Avatar */}
@@ -68,8 +86,12 @@ export default async function ManageFriendsPage() {
                     )}
                   </p>
                   {compatibility > 0 && (
-                    <p className="mt-0.5 text-[10px] font-bold"
-                      style={{ color: compatibility >= 50 ? "#FF5F00" : "#7A7775" }}>
+                    <p
+                      className="mt-0.5 text-[10px] font-bold"
+                      style={{
+                        color: compatibility >= 50 ? "#FF5F00" : "#7A7775",
+                      }}
+                    >
                       {compatibility}% taste match
                     </p>
                   )}
