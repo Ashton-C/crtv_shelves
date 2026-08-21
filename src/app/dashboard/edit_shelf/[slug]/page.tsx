@@ -39,6 +39,7 @@ export default async function EditShelfPage({
         type: shelf.type,
         size: shelf.size as "podium" | "focus" | "archive",
         isCollaborative: shelf.isCollaborative,
+        isPrivate: shelf.isPrivate,
         items: shelf.items.map((item) => ({
           name: item.name,
           sub: item.sub ?? "",

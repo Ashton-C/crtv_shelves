@@ -12,6 +12,7 @@ export type CreateShelfInput = {
   type: string;
   size: string;
   items: { name: string; sub: string }[];
+  isPrivate?: boolean;
 };
 
 export async function createShelf(input: CreateShelfInput) {
@@ -29,7 +30,7 @@ export async function createShelf(input: CreateShelfInput) {
       type: input.type,
       size: input.size,
       slug,
-      isPrivate: false,
+      isPrivate: input.isPrivate ?? false,
     })
     .returning();
 
@@ -99,6 +100,7 @@ export async function updateShelf(
     name?: string;
     items?: { name: string; sub: string }[];
     isCollaborative?: boolean;
+    isPrivate?: boolean;
   },
 ) {
   const { userId } = await auth();
@@ -113,13 +115,21 @@ export async function updateShelf(
   const isCollab = shelf?.collaborators.some((c) => c.userId === userId) ?? false;
   if (!shelf || (!isOwner && !isCollab)) throw new Error("Not found");
 
-  if (isOwner && (input.name !== undefined || input.isCollaborative !== undefined)) {
+  const ownerFieldsTouched =
+    input.name !== undefined ||
+    input.isCollaborative !== undefined ||
+    input.isPrivate !== undefined;
+
+  if (isOwner && ownerFieldsTouched) {
     await db
       .update(shelves)
       .set({
         ...(input.name !== undefined ? { name: input.name.trim() } : {}),
         ...(input.isCollaborative !== undefined
           ? { isCollaborative: input.isCollaborative }
+          : {}),
+        ...(input.isPrivate !== undefined
+          ? { isPrivate: input.isPrivate }
           : {}),
         updatedAt: new Date(),
       })

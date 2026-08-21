@@ -12,7 +12,11 @@ export default async function OgImage({
   params: { slug: string };
 }) {
   const shelf = await getShelfBySlug(params.slug);
-  if (!shelf) {
+
+  // OG images are fetched unauthenticated by crawlers, so there is no viewer to
+  // authorise. A private shelf therefore falls through to the generic branded
+  // card rather than leaking its contents into a link preview.
+  if (!shelf || shelf.isPrivate) {
     return new ImageResponse(
       (
         <div

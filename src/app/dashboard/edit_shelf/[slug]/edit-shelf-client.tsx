@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FiArrowLeft, FiMinus, FiSearch, FiTrash2 } from "react-icons/fi";
 import { ItemSearchModal } from "~/components/item-search-modal";
+import { ToggleRow } from "~/components/toggle-row";
 import { inviteCollaborator, removeCollaborator } from "~/server/actions/collaborators";
 import { deleteShelf, updateShelf } from "~/server/actions/shelves";
 
@@ -27,6 +28,7 @@ type Props = {
     type: string;
     size: ShelfSize;
     isCollaborative: boolean;
+    isPrivate: boolean;
     items: { name: string; sub: string }[];
   };
   isOwner: boolean;
@@ -38,6 +40,7 @@ export default function EditShelfClient({ shelf, isOwner, collaborators }: Props
   const [name, setName] = useState(shelf.name);
   const [items, setItems] = useState(shelf.items);
   const [isCollaborative, setIsCollaborative] = useState(shelf.isCollaborative);
+  const [isPrivate, setIsPrivate] = useState(shelf.isPrivate);
   const [modalSlot, setModalSlot] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -55,7 +58,12 @@ export default function EditShelfClient({ shelf, isOwner, collaborators }: Props
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateShelf(shelf.slug, { name: name.trim(), items, isCollaborative });
+      await updateShelf(shelf.slug, {
+        name: name.trim(),
+        items,
+        isCollaborative,
+        isPrivate,
+      });
       router.push(`/dashboard/view_shelf/${shelf.slug}`);
     } catch {
       setSaving(false);
@@ -205,30 +213,30 @@ export default function EditShelfClient({ shelf, isOwner, collaborators }: Props
           {isOwner && (
             <div>
               <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-muted">
+                visibility
+              </p>
+              <div className="mb-4">
+                <ToggleRow
+                  label="private shelf"
+                  description={
+                    isPrivate
+                      ? "only you can see this — hidden from search, profiles and friends"
+                      : "anyone with the link can see this shelf"
+                  }
+                  checked={isPrivate}
+                  onChange={setIsPrivate}
+                />
+              </div>
+
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-muted">
                 collaboration
               </p>
-              <button
-                onClick={() => setIsCollaborative((v) => !v)}
-                className="flex w-full items-center justify-between rounded-[14px] border border-border bg-surface px-4 py-3"
-              >
-                <div className="text-left">
-                  <p className="text-[13px] font-semibold text-text">allow collaborators</p>
-                  <p className="text-[11px] text-muted">
-                    let friends add and edit items on this shelf
-                  </p>
-                </div>
-                <div
-                  className="relative h-6 w-11 flex-shrink-0 rounded-full transition-colors"
-                  style={{ background: isCollaborative ? "#FF5F00" : "#2E2D2D" }}
-                >
-                  <div
-                    className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
-                    style={{
-                      transform: isCollaborative ? "translateX(20px)" : "translateX(2px)",
-                    }}
-                  />
-                </div>
-              </button>
+              <ToggleRow
+                label="allow collaborators"
+                description="let friends add and edit items on this shelf"
+                checked={isCollaborative}
+                onChange={setIsCollaborative}
+              />
 
               {isCollaborative && (
                 <div className="mt-2 flex flex-col gap-2">

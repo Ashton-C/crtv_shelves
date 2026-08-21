@@ -16,6 +16,14 @@ export default async function ShelfViewPage({
 
   if (!shelf) notFound();
 
+  const isOwner = userId === shelf.userId;
+  const isCollaborator = shelf.collaborators.some((c) => c.userId === userId);
+
+  // A private shelf is only reachable by its owner or a collaborator. Without
+  // this, `isPrivate` would be honoured by the listing queries but bypassed by
+  // anyone who had the direct URL.
+  if (shelf.isPrivate && !isOwner && !isCollaborator) notFound();
+
   const itemIds = shelf.items.map((i) => i.id);
   const [reactions, collaborators] = await Promise.all([
     getReactions(itemIds),
@@ -24,7 +32,7 @@ export default async function ShelfViewPage({
 
   return (
     <ShelfViewClient
-      isOwner={userId === shelf.userId}
+      isOwner={isOwner}
       currentUserId={userId ?? null}
       shelf={{
         id: shelf.id,
