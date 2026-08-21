@@ -43,17 +43,16 @@ Env vars are validated at startup via `@t3-oss/env-nextjs` (see `src/env.js`). S
    ```bash
    vercel env pull .env.local
    ```
-<<<<<<< HEAD
-4. In `.env.local`, set `POSTGRES_URL` to the value of `POSTGRES_URL`
-=======
-4. Vercel exposes several `POSTGRES_*` vars. Map the right one to `POSTGRES_URL` in `.env.local`:
-   - For the **app** (pooled): use `POSTGRES_URL`
-   - For **migrations** (non-pooled): Drizzle Kit needs a direct connection — see `drizzle.config.ts`
+4. Vercel exposes several `POSTGRES_*` vars. Confirm `.env.local` ends up with a
+   `POSTGRES_URL` line — that is the only one this project reads, from both the app
+   (`src/server/db/index.ts`) and the Drizzle CLI (`drizzle.config.ts`). If Vercel only
+   populated `POSTGRES_PRISMA_URL` / `POSTGRES_URL_NON_POOLING`, copy one into
+   `POSTGRES_URL` yourself.
 
-   ```
-   POSTGRES_URL="<value of POSTGRES_URL>"
-   ```
->>>>>>> origin/main
+   > `drizzle-kit` does not auto-load `.env.local` — only `.env`. `drizzle.config.ts`
+   > loads it explicitly, so a plain `vercel env pull .env.local` is enough. Note that
+   > a `dotenv` call cannot go above the `~/env` import: ES imports are hoisted, so
+   > validation would run first.
 
 5. Push the schema:
    ```bash
@@ -75,10 +74,14 @@ Schema lives in `src/server/db/schema.ts`. All tables use the `crtv_shelves_` pr
 
 | Table | Purpose |
 |---|---|
-| `crtv_shelves_user` | User profiles — populated by Clerk on first sign-in |
-| `crtv_shelves_shelf` | Shelves (name, category, type, size, slug, isPrivate) |
+| `crtv_shelves_user` | User profiles — populated by Clerk on first sign-in. Also holds the account privacy flags (`isPublic`, `shareByLink`, `showShelfCounts`) |
+| `crtv_shelves_shelf` | Shelves (name, category, type, size, slug, `isPrivate`, `isCollaborative`, shareCount, displayOrder) |
 | `crtv_shelves_shelf_item` | Items within a shelf (rank, name, sub, gradient colors, image) |
+| `crtv_shelves_shelf_item_reaction` | Per-item reactions. `type` is one of `fire` / `skull` / `eyes` / `check`. Unique on (shelfItemId, userId, type) |
+| `crtv_shelves_shelf_collaborator` | Users granted edit access to a shelf. Unique on (shelfId, userId) |
 | `crtv_shelves_friendship` | Friend relationships (pending / accepted / declined) |
+
+All six tables are live in production as of 2026-08-21.
 
 ---
 
@@ -161,17 +164,20 @@ Font: **Inter** (weights 400–900, variable `--font-inter`). Shelf names always
 
 ## Auth — Clerk
 
-**Status:** Code scaffolded, awaiting Clerk keys.
+**Status:** Live. Sign-up, sign-in, and route protection are verified in production.
 
-### Setup Steps
+### Setup Steps (for a fresh environment)
 1. Create a Clerk application at [clerk.com](https://clerk.com)
 2. Copy keys to `.env.local`:
    ```
    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
    CLERK_SECRET_KEY=sk_...
    ```
-3. Add to Vercel environment variables
-4. `pnpm add @clerk/nextjs` (if not already installed)
+3. Add both to Vercel environment variables
+
+> Both keys are `.optional()` in `src/env.js`, so a build **succeeds without them** and
+> then fails at runtime on every `/dashboard/*` route. If auth breaks with a green
+> deploy, check these first.
 
 ### Implementation Notes
 - `ClerkProvider` wraps `<body>` in `src/app/layout.tsx`
@@ -183,20 +189,63 @@ Font: **Inter** (weights 400–900, variable `--font-inter`). Shelf names always
 
 ## Implementation Status
 
+Last verified 2026-08-21 against production. See [README.md](./README.md) for the
+milestone-level roadmap.
+
 | Feature | Status |
 |---|---|
 | Landing / welcome page | Done |
 | Dashboard 3-panel layout (sidebar + feed + detail) | Done |
 | Mobile layout (bottom nav) | Done |
-| Shelf view page | Done (mock data) |
-| 4-step shelf creation UI | Done (no DB persistence yet) |
-| Friends list screen | Done (mock data) |
-| Settings screen | Done (mock data) |
-| Database schema | Defined — run `pnpm db:push` |
-| Auth (Clerk) | Code ready — needs keys |
-| DB persistence for shelves | Not started |
-| Server actions (createShelf, getUserShelves) | Not started |
-| Search page | Stub only |
-| Reorder shelves | Not started |
+| Auth (Clerk) | Done — live |
+| Database schema | Done — pushed to production |
+| DB persistence for shelves | Done |
+| 4-step shelf creation UI | Done — persists via `createShelf` |
+| Item search modal (create + edit flows) | Done |
+| Shelf view page | Done — real data |
+| Shelf editing / deletion | Done |
+| Reorder shelves | Done — `@hello-pangea/dnd` |
+| Public profile (`/u/[handle]`) | Done — works signed out |
+| OG share cards | Done — `next/og` |
+| Search / discover | Done |
+| Settings screen | Done — persists to DB |
+| Send friend request | Done |
+| **Accept / decline friend request** | **Server actions only — no UI wired up** |
+| Taste compatibility score | Done |
+| Activity feed | Done |
+| Wrapped stats | Done |
+| Item reactions | Done |
+| Collaborative shelves | Done |
+| **Per-shelf privacy toggle** | **Not started — `isPrivate` is hardcoded `false` on create** |
+| Rich shelf customization (themes, fonts) | Not started |
 | File uploads (Uploadthing) | Not started |
-| Item search modal (create flow step 4) | Not started |
+
+### Known Gaps
+
+Two items above are load-bearing and worth understanding before picking up new work:
+
+1. **Friend requests cannot be accepted in-app.** `respondToRequest()` and
+   `getPendingRequests()` exist in `src/server/actions/friends.ts`, but nothing calls
+   them. Friendships can only be completed by editing the DB directly, which in turn
+   makes the activity feed and taste-match scores unreachable for a normal user.
+2. **Every shelf is permanently public.** `createShelf()` hardcodes `isPrivate: false`
+   and `updateShelf()` does not accept the field, so there is no write path. Five read
+   queries already honor the column — only the toggle is missing.
+
+---
+
+## Testing
+
+```bash
+pnpm test        # vitest run — 46 tests
+pnpm test:watch  # watch mode
+```
+
+Tests live in `src/**/__tests__/`. Server-action tests mock `@clerk/nextjs/server`
+and `~/server/db`; `src/test/setup.ts` mocks `nanoid` for deterministic slugs.
+
+Note that `tsconfig.json` includes `**/*.ts`, so **test files are typechecked during
+`next build`** — a type error in a test will fail the Vercel deploy.
+
+[QA_RUNTHROUGH.md](./QA_RUNTHROUGH.md) is the manual pass: 16 sections, sign-off
+checklist at the end.
