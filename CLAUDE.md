@@ -262,6 +262,12 @@ Non-obvious constraints, each of which is load-bearing and has a test:
   rather than being read as a genuine miss.
 - **Open Library uses `cover_i: -1` for "no cover"** on some records, and
   without `?default=false` a missing cover returns 200 with a blank image.
+- **iTunes size tokens vary** — `100x100bb.jpg`, `100x100.jpg`,
+  `100x100bb-60.jpg`, `.png`. Upsizing only the `bb.jpg` form silently leaves a
+  blurry 100px image, so the suffix and extension are preserved.
+- **`imageUrl` is `varchar(512)` and Postgres errors on overflow** rather than
+  truncating, which would abort a whole backfill. Over-long URLs are treated as
+  a miss.
 - Games use Wikipedia rather than Steam: Steam has no console exclusives
   (Zelda, Mario) and its search endpoints are undocumented with no terms grant.
 
@@ -289,7 +295,7 @@ a license grant — worth a look before any public launch.
 ## Testing
 
 ```bash
-pnpm test        # vitest run — 80 tests
+pnpm test        # vitest run — 84 tests
 pnpm test:watch  # watch mode
 ```
 

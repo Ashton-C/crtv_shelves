@@ -104,7 +104,7 @@ Built during the Phase 2–4 push, none of it originally scoped:
 | Auth | Clerk | Live |
 | Uploads | UploadThing v7 | Optional — `UPLOADTHING_TOKEN` |
 | Cover art | iTunes · Wikipedia · Open Library | Keyless, resolved server-side |
-| Testing | Vitest | 80 tests |
+| Testing | Vitest | 84 tests |
 | File uploads | Uploadthing | Planned |
 | Package manager | pnpm | Required |
 

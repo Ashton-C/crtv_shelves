@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { resolveArtwork, upsizeItunesArtwork } from "../artwork";
+import {
+  MAX_ARTWORK_URL_LENGTH,
+  resolveArtwork,
+  upsizeItunesArtwork,
+} from "../artwork";
 
 // These providers are unreachable from CI/dev (egress-blocked), so every test
 // stubs fetch. The fixtures below mirror the documented response shapes.
@@ -72,6 +76,26 @@ describe("upsizeItunesArtwork", () => {
     expect(upsizeItunesArtwork("https://x/a/100x100bb.jpg", 1200)).toBe(
       "https://x/a/1200x1200bb.jpg",
     );
+  });
+
+  it("handles every real size-token variant, not just `bb.jpg`", () => {
+    // A regex matching only `bb.jpg` no-ops on these and silently yields a
+    // blurry 100px thumbnail with no error surfaced anywhere.
+    expect(upsizeItunesArtwork("https://x/a/100x100.jpg")).toBe(
+      "https://x/a/600x600.jpg",
+    );
+    expect(upsizeItunesArtwork("https://x/a/100x100bb-60.jpg")).toBe(
+      "https://x/a/600x600bb-60.jpg",
+    );
+    expect(upsizeItunesArtwork("https://x/a/100x100bb.png")).toBe(
+      "https://x/a/600x600bb.png",
+    );
+  });
+
+  it("does not mangle a Wikipedia thumbnail URL", () => {
+    const wiki =
+      "https://upload.wikimedia.org/wikipedia/en/thumb/d/db/Cover.jpg/600px-Cover.jpg";
+    expect(upsizeItunesArtwork(wiki)).toBe(wiki);
   });
 
   it("leaves a non-matching URL alone", () => {
@@ -328,5 +352,42 @@ describe("resolveArtwork — failure handling", () => {
     await expect(
       resolveArtwork("anything", "games", "Games"),
     ).resolves.toBeNull();
+  });
+});
+
+describe("resolveArtwork — column width guard", () => {
+  it("rejects a URL longer than the imageUrl column", async () => {
+    // shelf_item.imageUrl is varchar(512) and Postgres errors on overflow
+    // rather than truncating, which would abort the entire backfill.
+    const tooLong =
+      "https://upload.wikimedia.org/" + "x".repeat(MAX_ARTWORK_URL_LENGTH) + ".jpg";
+    expect(tooLong.length).toBeGreaterThan(MAX_ARTWORK_URL_LENGTH);
+
+    stubFetch([
+      {
+        match: "en.wikipedia.org",
+        body: wikiPages([
+          { index: 1, title: "Big", thumbnail: { source: tooLong } },
+        ]),
+      },
+    ]);
+    expect(await resolveArtwork("Big", "games", "Games")).toBeNull();
+  });
+
+  it("accepts a URL exactly at the limit", async () => {
+    const prefix = "https://upload.wikimedia.org/";
+    const exact = prefix + "y".repeat(MAX_ARTWORK_URL_LENGTH - prefix.length);
+    expect(exact.length).toBe(MAX_ARTWORK_URL_LENGTH);
+
+    stubFetch([
+      {
+        match: "en.wikipedia.org",
+        body: wikiPages([
+          { index: 1, title: "Exact", thumbnail: { source: exact } },
+        ]),
+      },
+    ]);
+    const hit = await resolveArtwork("Exact", "games", "Games");
+    expect(hit?.url).toBe(exact);
   });
 });

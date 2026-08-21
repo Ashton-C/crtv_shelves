@@ -72,7 +72,28 @@ async function getJson(url: string): Promise<unknown | null> {
  * end of the string rather than matching the first occurrence.
  */
 export function upsizeItunesArtwork(url: string, size = 600): string {
-  return url.replace(/\/\d+x\d+bb\.jpg$/, `/${size}x${size}bb.jpg`);
+  // The token carries a variable format suffix — `100x100bb.jpg`, plain
+  // `100x100.jpg`, `100x100bb-60.jpg`, and `.png` all occur. Matching only the
+  // `bb.jpg` form silently no-ops on the rest and leaves a blurry 100px image
+  // with no error anywhere, so the suffix and extension are preserved rather
+  // than assumed. A non-match returns the original URL: degraded, not broken.
+  return url.replace(
+    /\/(\d+)x(\d+)([a-z0-9-]*)\.(jpg|png)$/i,
+    (_match, _w: string, _h: string, suffix: string, ext: string) =>
+      `/${size}x${size}${suffix}.${ext}`,
+  );
+}
+
+/**
+ * shelf_item.imageUrl is varchar(512), and Postgres ERRORS on overflow rather
+ * than truncating — an over-long URL would abort the whole backfill. Anything
+ * longer is treated as a miss so the item keeps its gradient placeholder.
+ */
+export const MAX_ARTWORK_URL_LENGTH = 512;
+
+function withinColumnLimit(hit: ArtworkHit | null): ArtworkHit | null {
+  if (!hit) return null;
+  return hit.url.length <= MAX_ARTWORK_URL_LENGTH ? hit : null;
 }
 
 // ── iTunes ────────────────────────────────────────────────────────────────────
@@ -282,7 +303,7 @@ export async function resolveArtwork(
   if (!trimmed) return null;
 
   for (const provider of providerChain(trimmed, category, type)) {
-    const hit = await provider();
+    const hit = withinColumnLimit(await provider());
     if (hit) return hit;
   }
   return null;
